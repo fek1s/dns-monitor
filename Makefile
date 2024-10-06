@@ -16,7 +16,7 @@ $(B)/main.o: $(SRC)/main.c
 	@echo "Compiling main.o"
 	$(CC) $(CFLAGS) -c $< -o $@
 
-# Object supp.o
+# Object arg_parser.o
 $(B)/arg_parser.o: $(SRC)/arg_parser.c $(SRC)/arg_parser.h
 	@mkdir -p build
 	@echo "Compiling arg_parser.o"
