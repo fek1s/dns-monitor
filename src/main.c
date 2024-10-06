@@ -5,11 +5,9 @@ int main(int argc, char * argv[]) {
     
     utility_func();
     
-    for (int i = 0; i < argc; i++)
-    {
-        char * arg = argv[i];
-        printf("argv[%d] = %s\n", i, arg);
-    }
+    ProgramArguments args = parse_arguments(argc, argv);
+
+    printf("interface: %s\n", args.interface);
     
     return 0;
 
