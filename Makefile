@@ -3,7 +3,7 @@ CFLAGS= -std=gnu99 -Wall -Wextra -Werror -pedantic -g
 CC=gcc
 B=build
 SRC=src
-OBJS= $(B)/main.o $(B)/utility.o
+OBJS= $(B)/main.o $(B)/arg_parser.o
 
 # Executable target
 $(BIN): $(OBJS)
@@ -17,9 +17,9 @@ $(B)/main.o: $(SRC)/main.c
 	$(CC) $(CFLAGS) -c $< -o $@
 
 # Object supp.o
-$(B)/utility.o: $(SRC)/utility.c $(SRC)/utility.h
+$(B)/arg_parser.o: $(SRC)/arg_parser.c $(SRC)/arg_parser.h
 	@mkdir -p build
-	@echo "Compiling utility.o"
+	@echo "Compiling arg_parser.o"
 	$(CC) $(CFLAGS) -c $< -o $@
 
 # Clean target
