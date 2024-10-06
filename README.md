@@ -8,4 +8,4 @@ https://www.geeksforgeeks.org/getopt-function-in-c-to-parse-command-line-argumen
 
 https://datatracker.ietf.org/doc/html/rfc1035
 
-https://datatracker.ietf.org/doc/html/rfc3596
+https://datatracker.ietf.org/doc/html/rfc3596                       
