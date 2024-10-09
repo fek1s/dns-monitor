@@ -3,6 +3,8 @@
 # Binary
 dns-monitor
 
+*.pcapng
+
 # Folders
 .vscode/
 build/
