@@ -9,8 +9,8 @@
  */
 
 
-#ifndef SUPP_H
-#define SUPP_H
+#ifndef DNS_MONITOR_H
+#define DNS_MONITOR_H
 
 #include <stdlib.h>
 #include <unistd.h>
@@ -69,5 +69,19 @@ void handle_signal();
  * @return Pointer to pcap_t handle, or NULL on failure.
  */
 pcap_t* pcap_handle_ctor(const char *interface, const char* pcap_file);
+
+
+/**
+ * @brief Handles the packets captured by the pcap handle.
+ * 
+ * This function is called for each packet captured by the pcap handle.
+ * It processes the packet and prints the relevant information to the
+ * standard output.
+ * 
+ * @param user User data passed to the pcap_loop function.
+ * @param pkthdr Packet header containing information about the packet.
+ * @param packet Packet data.
+ */
+void packet_handler(unsigned char *user, const struct pcap_pkthdr *header, const unsigned char *packet);
 
 #endif // DNS_MONITOR_H

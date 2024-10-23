@@ -57,7 +57,11 @@ int main(int argc, char * argv[]) {
         return 1;
     }
 
-
+    // Start packet capture
+    int pcap_return = pcap_loop(handle, 0, packet_handler, (unsigned char *)handle);
+    if (pcap_return == PCAP_ERROR){
+        fprintf(stderr, "Error in pcap_loop: %s\n", pcap_geterr(handle));
+    }
 
 
     // Clean up
