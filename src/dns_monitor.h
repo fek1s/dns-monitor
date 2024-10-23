@@ -1,5 +1,5 @@
 /**
- * @file arg_parser.h
+ * @file dns_monitor.h
  * @brief Header file for argument parsing and signal handling in dns-monitor.
  * @author Jakub Fukala (xfukal01)
  *
@@ -14,10 +14,10 @@
 
 #include <stdlib.h>
 #include <unistd.h>
-#include <getopt.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <signal.h>
+#include <pcap/pcap.h>
 
 /**
  * @brief Holds the cli arguments passed to the program
@@ -61,4 +61,13 @@ ProgramArguments parse_arguments(int argc, char * argv[]);
  */
 void handle_signal();
 
-#endif
+/**
+ * @brief Creates a pcap handle for capturing packets.
+ * 
+ * @param interface Network interface to capture packets from.
+ * @param pcap_file PCAP file to read packets from.
+ * @return Pointer to pcap_t handle, or NULL on failure.
+ */
+pcap_t* pcap_handle_ctor(const char *interface, const char* pcap_file);
+
+#endif // DNS_MONITOR_H

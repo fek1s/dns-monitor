@@ -1,10 +1,12 @@
 #include <stdio.h>
-#include "arg_parser.h"
+#include "dns_monitor.h"
+#include <getopt.h>
 
 
 void print_usage(){
     fprintf(stderr, "Použití: dns-monitor (-i <interface> | -p <pcapfile>) [-v] [-d <domainsfile>] [-t <translationsfile>]\n");
     //exit(EXIT_FAILURE);
+    return;
 }               
 
 ProgramArguments parse_arguments(int argc, char * argv[]){

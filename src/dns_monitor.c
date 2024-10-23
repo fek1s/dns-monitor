@@ -1,14 +1,12 @@
 /**
- * @file main.c
+ * @file dns_monitor.c
  * @brief DNS Monitor main program file.
  * @author Jakub Fukala (xfukal01)
  *
  * This file contains the main function and signal handling for the dns-monitor program.
  */
 
-#include "arg_parser.h"
-#include <pcap.h>
-#include <pcap/pcap.h>
+#include "dns_monitor.h"
 #include <string.h>
 
 // Global variable to stop the packet capture
@@ -22,7 +20,56 @@ void handle_signal() {
     stop_capture = 1;
 }
 
-pcap_t* pcap_handle_ctor(char *interface, char* pcap_file){
+int main(int argc, char * argv[]) {
+        
+    ProgramArguments args = parse_arguments(argc, argv);
+
+    // Open domains and translations files if specified
+    FILE *domains_file = NULL;
+    FILE *translations_file = NULL;
+
+    if (args.domainsfile){
+        domains_file = fopen(args.domainsfile, "w");
+        if (domains_file == NULL){
+            fprintf(stderr, "Couldn't open domains file %s\n", args.domainsfile);
+            return 1;
+        }
+    }
+
+    if (args.translationsfile){
+        translations_file = fopen(args.translationsfile, "w");
+        if (translations_file == NULL){
+            fprintf(stderr, "Couldn't open translations file %s\n", args.translationsfile);
+            return 1;
+        }
+    }
+
+    // Set up signal handling
+    signal(SIGINT, handle_signal);
+    signal(SIGTERM, handle_signal);
+    signal(SIGQUIT, handle_signal);
+
+    // Open the pcap handle
+    pcap_t *handle = pcap_handle_ctor(args.interface, args.pcapfile);
+    if (handle == NULL){
+        if (domains_file) fclose(domains_file);
+        if (translations_file) fclose(translations_file);
+        return 1;
+    }
+
+
+
+
+    // Clean up
+    pcap_close(handle);
+    if (domains_file) fclose(domains_file);
+    if (translations_file) fclose(translations_file);
+
+    
+    return 0;
+}
+
+pcap_t* pcap_handle_ctor(const char *interface, const char* pcap_file){
     pcap_t *handle = NULL;
     char errbuf[PCAP_ERRBUF_SIZE];
     bpf_u_int32 mask = 0;
@@ -73,31 +120,4 @@ pcap_t* pcap_handle_ctor(char *interface, char* pcap_file){
     pcap_freecode(&fp);
 
     return handle;
-}
-
-int main(int argc, char * argv[]) {
-        
-    ProgramArguments args = parse_arguments(argc, argv);
-
-    //args.interface = "enp0s20f0u2u3";
-    printf("interface: %s\n", args.interface);
-
-    signal(SIGINT, handle_signal);
-    signal(SIGTERM, handle_signal);
-    signal(SIGQUIT, handle_signal);
-
-    pcap_t *handle = pcap_handle_ctor(args.interface, args.pcapfile);
-    if (handle == NULL){
-        return 1;
-    }
-
-
-
-
-    // Close the handle
-    pcap_close(handle);
-
-    
-    return 0;
-
 }
