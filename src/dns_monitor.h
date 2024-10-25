@@ -84,4 +84,19 @@ pcap_t* pcap_handle_ctor(const char *interface, const char* pcap_file);
  */
 void packet_handler(unsigned char *user, const struct pcap_pkthdr *header, const unsigned char *packet);
 
+/**
+ * @brief Determines the length of the link-layer header based on the link type.
+ *
+ * Supported link types and their corresponding header lengths:
+ * - DLT_NULL: 4 bytes
+ * - DLT_EN10MB: 14 bytes
+ * - DLT_SLIP: 24 bytes
+ * - DLT_PPP: 24 bytes
+ *
+ * If the link type is unsupported, an error message is printed and the header length is set to 0.
+ *
+ * @return The length of the link-layer header in bytes.
+ */
+int get_link_header_len();
+
 #endif // DNS_MONITOR_H
