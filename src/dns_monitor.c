@@ -13,7 +13,7 @@
 volatile sig_atomic_t stop_capture = 0;
 
 // Global variable to hold the pcap handle
-//pcap_t * handle;
+pcap_t *handle;
 
 void handle_signal() {
     printf("\nReceived Ctrl+C, exiting...\n");
@@ -50,7 +50,7 @@ int main(int argc, char * argv[]) {
     signal(SIGQUIT, handle_signal);
 
     // Open the pcap handle
-    pcap_t *handle = pcap_handle_ctor(args.interface, args.pcapfile);
+    handle = pcap_handle_ctor(args.interface, args.pcapfile);
     if (handle == NULL){
         if (domains_file) fclose(domains_file);
         if (translations_file) fclose(translations_file);
@@ -58,7 +58,7 @@ int main(int argc, char * argv[]) {
     }
 
     // Start packet capture
-    int pcap_return = pcap_loop(handle, 0, packet_handler, (unsigned char *)handle);
+    int pcap_return = pcap_loop(handle, 0, packet_handler, (unsigned char *)&args);
     if (pcap_return == PCAP_ERROR){
         fprintf(stderr, "Error in pcap_loop: %s\n", pcap_geterr(handle));
     }
