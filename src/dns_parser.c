@@ -143,32 +143,71 @@ void packet_handler(unsigned char *user, const struct pcap_pkthdr *header, const
 void proccees_dns_packet(const unsigned char *dns_payload, int dns_payload_len, const char *src_ip_str, const char *dst_ip_str,
                         uint16_t src_port, uint16_t dst_port, int verbose, const struct timeval ts){
 
+
+    if (dns_payload_len < MIN_DNS_HEADER_LEN)
+    {
+        fprintf(stderr, "DNS payload is too short for parsing!\n");
+    }
+
+    uint16_t id, flags, qd_count, an_count, ns_count, ar_count;
+
+    parse_dns_header(dns_payload, &id, &flags, &qd_count, &an_count, &ns_count, &ar_count);
+
+
     // Get the timestamp
     char timestamp[64];
     struct tm *tm_info = localtime(&ts.tv_sec);
     strftime(timestamp, sizeof(timestamp), "%Y-%m-%d %H:%M:%S", tm_info);
 
+    // Extract the flags
+    int qr = GET_QR(flags);
+    int opcode = GET_OPCODE(flags);
+    int aa = GET_AA(flags);
+    int tc = GET_TC(flags);
+    int rd = GET_RD(flags);
+    int ra = GET_RA(flags);
+    int ad = GET_AD(flags);
+    int cd = GET_CD(flags);
+    int rcode = GET_RCODE(flags);
+
     if (!verbose){
+        // Non-verbose output
         printf("%s %s -> %s (%c %d/%d/%d/%d)\n",
                 timestamp, src_ip_str, dst_ip_str, 
-                'Q', 
-                1, 1, 1, 1);
-        // Remove
-        printf("DNS payload length: %d\n", dns_payload_len);
-        printf("DNS payload: ");
-        for (int i = 0; i < dns_payload_len; i++){
-            printf("%02x ", dns_payload[i]);
-        }
+                qr ? 'R' : 'Q', // 1 for response, 0 for query
+                qd_count, an_count, ns_count, ar_count);
+                
+        printf("\n");
 
-        printf("\n\n");
         return;
     } else {
-         // Verbose output
+        // Verbose output
         printf("Timestamp: %s\n", timestamp);
         printf("SrcIP: %s\n", src_ip_str);
         printf("DstIP: %s\n", dst_ip_str);
         printf("SrcPort: UDP/%d\n", src_port);
         printf("DstPort: UDP/%d\n", dst_port);
+        printf("Identifier: 0x%04X\n", id);
+        printf("Flags: QR=%d, OPCODE=%d, AA=%d, TC=%d, RD=%d, RA=%d, AD=%d, CD=%d, RCODE=%d\n",
+               qr, opcode, aa, tc, rd, ra, ad, cd, rcode);
         printf("\n");
+
+        return;
     }
+}
+
+void parse_dns_header(const unsigned char *dns_payload, uint16_t *id, uint16_t *flags, uint16_t *qd_count,
+                        uint16_t *an_count, u_int16_t *ns_count, uint16_t *ar_count){
+    if (!dns_payload)
+    {   
+        fprintf(stderr, "DNS payload is NULL!\n");
+        return;
+    }
+
+    *id = EXTRACT_16BITS(dns_payload, DNS_ID_OFFSET);
+    *flags = EXTRACT_16BITS(dns_payload, DNS_FLAGS_OFFSET);
+    *qd_count = EXTRACT_16BITS(dns_payload, DNS_QDCOUNT_OFFSET);
+    *an_count = EXTRACT_16BITS(dns_payload, DNS_ANCOUNT_OFFSET);
+    *ns_count = EXTRACT_16BITS(dns_payload, DNS_NSCOUNT_OFFSET);
+    *ar_count = EXTRACT_16BITS(dns_payload, DNS_ARCOUNT_OFFSET);
 }
