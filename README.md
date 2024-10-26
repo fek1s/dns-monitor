@@ -14,7 +14,7 @@ https://datatracker.ietf.org/doc/html/rfc3596
 
 ### Understanding the DNS Header Format
 
-A DNS header [1](#citace) is a fixed-size structure (12 bytes) with the following layout:
+A DNS header ^[[1](#citace)] is a fixed-size structure (12 bytes) with the following layout:
 
 | Bytes     | Field       | Description                                   |
 |-----------|-------------|-----------------------------------------------|
