@@ -26,6 +26,29 @@
 #include <arpa/inet.h>         // For inet_ntop to convert IP addresses to strings
 #include <string.h>            // For memset, memcpy
 
+// Macros for extracting individual bits from the flags field of the DNS header
+#define GET_QR(flags)      (((flags) >> 15) & 0x01)
+#define GET_OPCODE(flags)  (((flags) >> 11) & 0x0F)
+#define GET_AA(flags)      (((flags) >> 10) & 0x01)
+#define GET_TC(flags)      (((flags) >> 9) & 0x01)
+#define GET_RD(flags)      (((flags) >> 8) & 0x01)
+#define GET_RA(flags)      (((flags) >> 7) & 0x01)
+#define GET_AD(flags)      (((flags) >> 5) & 0x01)
+#define GET_CD(flags)      (((flags) >> 4) & 0x01)
+#define GET_RCODE(flags)   ((flags) & 0x0F)
+
+// Macro for extracting 16 bits from a byte array at a given offset
+#define EXTRACT_16BITS(data, offset) (((data)[offset] << 8) | (data)[offset + 1])
+
+// Offsets of fields in the DNS header
+#define DNS_ID_OFFSET 0
+#define DNS_FLAGS_OFFSET 2
+#define DNS_QDCOUNT_OFFSET 4
+#define DNS_ANCOUNT_OFFSET 6
+#define DNS_NSCOUNT_OFFSET 8
+#define DNS_ARCOUNT_OFFSET 10
+
+#define MIN_DNS_HEADER_LEN 12
 
 
 /**
@@ -124,5 +147,22 @@ int get_link_header_len();
  * @param ts Timestamp of the packet.
  */
 void proccees_dns_packet(const unsigned char *dns_payload, int dns_payload_len, const char *src_ip_str, const char *dst_ip_str, uint16_t src_port, uint16_t dst_port, int verbose, const struct timeval ts);
+
+
+/**
+ * @brief Parses the DNS header from the given DNS payload.
+ *
+ * This function extracts various fields from the DNS header, including the ID, flags,
+ * question count, answer count, authority record count, and additional record count.
+ *
+ * @param dns_payload Pointer to the DNS payload from which the header will be parsed.
+ * @param id Pointer to a variable where the Transaction ID will be stored.
+ * @param flags Pointer to a variable where the Flags will be stored.
+ * @param qd_count Pointer to a variable where the Number of questions will be stored.
+ * @param an_count Pointer to a variable where the Number of answers will be stored.
+ * @param ns_count Pointer to a variable where the Number of authority records field will be stored.
+ * @param ar_count Pointer to a variable where the Number of additional records will be stored.
+ */
+void parse_dns_header(const unsigned char *dns_payload, uint16_t *id, uint16_t *flags, uint16_t *qd_count, uint16_t *an_count, u_int16_t *ns_count, uint16_t *ar_count);
 
 #endif // DNS_MONITOR_H
