@@ -192,6 +192,9 @@ void proccees_dns_packet(const unsigned char *dns_payload, int dns_payload_len, 
                qr, opcode, aa, tc, rd, ra, ad, cd, rcode);
         printf("\n");
 
+        // Separator
+        printf("====================\n");
+
         return;
     }
 }
