@@ -8,17 +8,7 @@
 
 
 #include "dns_monitor.h"
-#include <pcap.h>
-#include <netinet/in.h>       // Include this for IP address structures
-#include <netinet/if_ether.h>  // For struct ether_header
-#include <netinet/ip.h>        // For struct ip (IPv4 header)
-#include <netinet/ip_icmp.h>   // For struct icmp (ICMP header)
-#include <netinet/ip6.h>       // For struct ip6_hdr (IPv6 header)
-#include <netinet/udp.h>       // For struct udphdr (UDP header)
-#include <arpa/inet.h>         // For inet_ntop to convert IP addresses to strings
-#include <string.h>            // For memset, memcpy
-#include <stdio.h>             // For standard I/O functions
-
+#include <time.h>
 
 // Global variable to stop the packet capture
 extern volatile sig_atomic_t stop_capture;
@@ -61,9 +51,7 @@ void packet_handler(unsigned char *user, const struct pcap_pkthdr *header, const
         pcap_breakloop(handle);
         return;
     }
-    //printf("Packet captured\n");
 
-    
     // Casts the user data to a ProgramArguments pointer.
     ProgramArguments *args = (ProgramArguments *)user;
 
@@ -71,6 +59,7 @@ void packet_handler(unsigned char *user, const struct pcap_pkthdr *header, const
     // Get the length of the link-layer header
     int linkhdrlen = get_link_header_len();
     if (linkhdrlen == PCAP_ERROR){
+        fprintf(stderr, "Failed to determine link-layer header length.\n");
         return;
     }
 
@@ -97,7 +86,6 @@ void packet_handler(unsigned char *user, const struct pcap_pkthdr *header, const
 
     if (ip_version == 4){
         // IPv4 
-        const struct iphdr *ip_hdr = (struct iphdr *)ip_header;
         int ip_hdr_len = ip_hdr->ihl * 4; // Length of the IP header in bytes
 
         // Make sure the packet is UDP
@@ -142,17 +130,45 @@ void packet_handler(unsigned char *user, const struct pcap_pkthdr *header, const
     dst_port = ntohs(udphdr->dest);
 
 
-    // Print the packet information
-    printf("Packet captured: %s:%d -> %s:%d\n", src_ip_str, src_port, dst_ip_str, dst_port);
-    printf("DNS payload length: %d\n", dns_payload_len);
-    printf("DNS payload: ");
-    for (int i = 0; i < dns_payload_len; i++){
-        printf("%02x ", dns_payload[i]);
-    }
-    printf("\n\n");
+    // Process the DNS packet
+    proccees_dns_packet(dns_payload, dns_payload_len, src_ip_str, dst_ip_str, src_port, dst_port, args->verbose, header->ts);
 
     // Sleep for 2 seconds if the debug flag is set
     if (args->debug){
+        //printf("Sleeping for 2 seconds...\n");
         sleep(2);
+    }
+}
+
+void proccees_dns_packet(const unsigned char *dns_payload, int dns_payload_len, const char *src_ip_str, const char *dst_ip_str,
+                        uint16_t src_port, uint16_t dst_port, int verbose, const struct timeval ts){
+
+    // Get the timestamp
+    char timestamp[64];
+    struct tm *tm_info = localtime(&ts.tv_sec);
+    strftime(timestamp, sizeof(timestamp), "%Y-%m-%d %H:%M:%S", tm_info);
+
+    if (!verbose){
+        printf("%s %s -> %s (%c %d/%d/%d/%d)\n",
+                timestamp, src_ip_str, dst_ip_str, 
+                'Q', 
+                1, 1, 1, 1);
+        // Remove
+        printf("DNS payload length: %d\n", dns_payload_len);
+        printf("DNS payload: ");
+        for (int i = 0; i < dns_payload_len; i++){
+            printf("%02x ", dns_payload[i]);
+        }
+
+        printf("\n\n");
+        return;
+    } else {
+         // Verbose output
+        printf("Timestamp: %s\n", timestamp);
+        printf("SrcIP: %s\n", src_ip_str);
+        printf("DstIP: %s\n", dst_ip_str);
+        printf("SrcPort: UDP/%d\n", src_port);
+        printf("DstPort: UDP/%d\n", dst_port);
+        printf("\n");
     }
 }

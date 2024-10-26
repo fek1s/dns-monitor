@@ -14,10 +14,19 @@
 
 #include <stdlib.h>
 #include <unistd.h>
-#include <stdlib.h>
 #include <stdio.h>
 #include <signal.h>
 #include <pcap/pcap.h>
+#include <netinet/in.h>       // Include this for IP address structures
+#include <netinet/if_ether.h>  // For struct ether_header
+#include <netinet/ip.h>        // For struct ip (IPv4 header)
+#include <netinet/ip_icmp.h>   // For struct icmp (ICMP header)
+#include <netinet/ip6.h>       // For struct ip6_hdr (IPv6 header)
+#include <netinet/udp.h>       // For struct udphdr (UDP header)
+#include <arpa/inet.h>         // For inet_ntop to convert IP addresses to strings
+#include <string.h>            // For memset, memcpy
+
+
 
 /**
  * @brief Holds the cli arguments passed to the program
@@ -98,5 +107,22 @@ void packet_handler(unsigned char *user, const struct pcap_pkthdr *header, const
  * @return The length of the link-layer header in bytes.
  */
 int get_link_header_len();
+
+/**
+ * @brief Processes the DNS payload of a packet.
+ *
+ * This function extracts the DNS header and questions from the DNS payload
+ * of a packet and prints the information to the standard output.
+ *
+ * @param dns_payload Pointer to the DNS payload.
+ * @param dns_payload_len Length of the DNS payload.
+ * @param src_ip_str Source IP address of the packet.
+ * @param dst_ip_str Destination IP address of the packet.
+ * @param src_port Source port of the packet.
+ * @param dst_port Destination port of the packet.
+ * @param verbose Flag to enable verbose output.
+ * @param ts Timestamp of the packet.
+ */
+void proccees_dns_packet(const unsigned char *dns_payload, int dns_payload_len, const char *src_ip_str, const char *dst_ip_str, uint16_t src_port, uint16_t dst_port, int verbose, const struct timeval ts);
 
 #endif // DNS_MONITOR_H
