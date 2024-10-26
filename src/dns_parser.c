@@ -61,7 +61,7 @@ void packet_handler(unsigned char *user, const struct pcap_pkthdr *header, const
         pcap_breakloop(handle);
         return;
     }
-    printf("Packet captured\n");
+    //printf("Packet captured\n");
 
     
     // Casts the user data to a ProgramArguments pointer.
@@ -151,6 +151,8 @@ void packet_handler(unsigned char *user, const struct pcap_pkthdr *header, const
     }
     printf("\n\n");
 
-    // Wait for 2 seconds
-    sleep(2);
+    // Sleep for 2 seconds if the debug flag is set
+    if (args->debug){
+        sleep(2);
+    }
 }
