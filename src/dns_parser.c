@@ -135,8 +135,7 @@ void packet_handler(unsigned char *user, const struct pcap_pkthdr *header, const
 
     // Sleep for 2 seconds if the debug flag is set
     if (args->debug){
-        //printf("Sleeping for 2 seconds...\n");
-        sleep(2);
+        sleep(1);
     }
 }
 
@@ -147,6 +146,7 @@ void proccees_dns_packet(const unsigned char *dns_payload, int dns_payload_len, 
     if (dns_payload_len < MIN_DNS_HEADER_LEN)
     {
         fprintf(stderr, "DNS payload is too short for parsing!\n");
+        return;
     }
 
     uint16_t id, flags, qd_count, an_count, ns_count, ar_count;
