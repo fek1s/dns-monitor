@@ -51,6 +51,14 @@ int domain_exists(DomainList *list, const char *domain_name){
 
 
 void free_domain_list(DomainList *list){
+    DomainNode *current = list->head;
+    while (current != NULL){
+        DomainNode *temp = current;
+        current = current->next;
+        free(temp->domain_name);
+        free(temp);
+    }
+    list->head = NULL;
 
 }
 
