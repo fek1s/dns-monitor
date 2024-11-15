@@ -4,7 +4,7 @@ LDFLAGS= -lpcap
 CC=gcc
 B=build
 SRC=src
-OBJS= $(B)/dns_monitor.o $(B)/arg_parser.o $(B)/dns_parser.o
+OBJS= $(B)/dns_monitor.o $(B)/arg_parser.o $(B)/dns_parser.o $(B)/linked_list.o
 
 # Executable target
 $(BIN): $(OBJS)
@@ -26,6 +26,11 @@ $(B)/arg_parser.o: $(SRC)/arg_parser.c $(SRC)/dns_monitor.h
 $(B)/dns_parser.o: $(SRC)/dns_parser.c $(SRC)/dns_monitor.h
 	@mkdir -p build
 	@echo "Compiling dns_parser.o"
+	$(CC) $(CFLAGS) -c $< -o $@
+
+$(B)/linked_list.o: $(SRC)/linked_list.c $(SRC)/linked_list.h
+	@mkdir -p build
+	@echo "Compiling linked_list.o"
 	$(CC) $(CFLAGS) -c $< -o $@
 
 # Clean target
