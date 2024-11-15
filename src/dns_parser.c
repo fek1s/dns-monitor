@@ -171,7 +171,7 @@ void proccees_dns_packet(const unsigned char *dns_payload, int dns_payload_len, 
     int rcode = GET_RCODE(flags);
 
     if (!verbose){
-        // Non-verbose output
+        // Simple output
         printf("%s %s -> %s (%c %d/%d/%d/%d)\n",
                 timestamp, src_ip_str, dst_ip_str, 
                 qr ? 'R' : 'Q', // 1 for response, 0 for query
@@ -192,8 +192,19 @@ void proccees_dns_packet(const unsigned char *dns_payload, int dns_payload_len, 
                qr, opcode, aa, tc, rd, ra, ad, cd, rcode);
         printf("\n");
 
-        // Separator
         printf("====================\n");
+
+        int offset = MIN_DNS_HEADER_LEN;
+
+        char domain_name[MAX_DOMAIN_NAME_LEN];
+        offset += parse_domain_name(dns_payload, dns_payload_len, offset, domain_name);
+        if (offset < 0){
+            fprintf(stderr, "Failed to parse domain name!\n");
+            return;
+        }
+
+        printf("Domain: %s\n", domain_name);
+        printf("%d\n", offset);
 
         return;
     }
@@ -213,4 +224,98 @@ void parse_dns_header(const unsigned char *dns_payload, uint16_t *id, uint16_t *
     *an_count = EXTRACT_16BITS(dns_payload, DNS_ANCOUNT_OFFSET);
     *ns_count = EXTRACT_16BITS(dns_payload, DNS_NSCOUNT_OFFSET);
     *ar_count = EXTRACT_16BITS(dns_payload, DNS_ARCOUNT_OFFSET);
+}
+
+/**
+ * @brief Parses the domain name from the DNS payload.
+ * 
+ * This function extracts the domain name from the DNS payload starting at the given offset.
+ * @param dns_payload Pointer to the DNS payload.
+ * @param dns_payload_len Length of the DNS payload.
+ * @param offset Offset in the DNS payload where the domain name starts.
+ * @param domain_name Pointer to a buffer where the domain name will be stored.
+ */
+int parse_domain_name(const unsigned char *dns_payload, int dns_payload_len, int offset, char *domain_name){
+    int offset_start = offset;
+    int domain_name_len = 0;
+    int jumped = 0; // Flag to indicate if a jump was made
+    int pointer_count = 0; // Number of pointers encountered
+    int bytes_consumed = 0; // Number of bytes consumed
+
+    while (offset < dns_payload_len){
+        uint8_t label_len = dns_payload[offset];
+
+        if ((label_len & 0xC0) == 0xC0){
+            // Pointer
+            /////////////////////////
+
+            if (offset + 1 >= dns_payload_len){
+                fprintf(stderr, "Invalid pointer offset!\n");
+                return -1;
+            }
+            
+        
+            if (pointer_count >= 5){
+                fprintf(stderr, "Too many pointers encountered!\n");
+                return -1;
+            }
+
+            // Calculate the pointer offset
+            uint16_t pointer = ((label_len & 0x3F) << 8) | dns_payload[offset + 1];
+            if (pointer >= dns_payload_len){
+                fprintf(stderr, "Invalid pointer offset!\n");
+                return -1;
+            }
+
+            if (!jumped){
+                bytes_consumed = offset - offset_start + 2; // Calculate the number of bytes consumed
+            }
+
+            offset = pointer;
+            jumped = 1;
+            pointer_count++;
+            //continue;   
+        } else if (label_len == 0){
+            // End of domain name
+            offset++;
+            if (!jumped){
+                bytes_consumed = offset - offset_start; // Calculate the number of bytes consumed
+            }
+            break;
+
+        } else {
+            // Label
+
+            offset++;
+
+            if (offset + label_len > dns_payload_len){
+                fprintf(stderr, "Invalid label length!\n");
+                return -1;
+            }
+
+            if (domain_name_len + label_len + 1 >= MAX_DOMAIN_NAME_LEN){
+                fprintf(stderr, "Domain name is too long!\n");
+                return -1;
+            }
+
+            // Append dot if not the first label
+            if (domain_name_len > 0){
+                domain_name[domain_name_len] = '.';
+                domain_name_len++;
+            }
+
+            // Copy the label to the domain name
+            memcpy(domain_name + domain_name_len, dns_payload + offset, label_len);
+            domain_name_len += label_len;
+            offset += label_len;
+
+            if (!jumped){
+                bytes_consumed = offset - offset_start; // Calculate the number of bytes consumed
+            }
+        }
+    }   
+
+    domain_name[domain_name_len] = '\0'; // Null-terminate the domain name
+
+    return bytes_consumed;
 }
