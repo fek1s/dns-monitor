@@ -48,7 +48,7 @@ void init_domain_list(DomainList *list);
  * 
  * @param list A pointer to the DomainList.
  * @param domain_name The domain name to be added.
- * @return 0 if the domain was added successfully, -1 if the domain already exists.
+ * @return 0 if the domain was added successfully, 1 if the domain already exists.
  */
 int add_domain_name(DomainList *list, const char *domain_name);
 
