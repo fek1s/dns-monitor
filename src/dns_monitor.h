@@ -50,6 +50,8 @@
 
 #define MIN_DNS_HEADER_LEN 12
 
+#define MAX_DOMAIN_NAME_LEN 256
+
 
 /**
  * @brief Holds the cli arguments passed to the program
@@ -164,5 +166,17 @@ void proccees_dns_packet(const unsigned char *dns_payload, int dns_payload_len, 
  * @param ar_count Pointer to a variable where the Number of additional records will be stored.
  */
 void parse_dns_header(const unsigned char *dns_payload, uint16_t *id, uint16_t *flags, uint16_t *qd_count, uint16_t *an_count, u_int16_t *ns_count, uint16_t *ar_count);
+
+
+/**
+ * @brief Parses the domain name from the DNS payload.
+ * 
+ * This function extracts the domain name from the DNS payload starting at the given offset.
+ * @param dns_payload Pointer to the DNS payload.
+ * @param dns_payload_len Length of the DNS payload.
+ * @param offset Offset in the DNS payload where the domain name starts.
+ * @param domain_name Pointer to a buffer where the domain name will be stored.
+ */
+int parse_domain_name(const unsigned char *dns_payload, int dns_payload_len, int offset, char *domain_name);
 
 #endif // DNS_MONITOR_H
