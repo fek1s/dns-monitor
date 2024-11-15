@@ -31,6 +31,7 @@ int add_domain_name(DomainList *list, const char *domain_name){
     if (new_node->domain_name == NULL){
         fprintf(stderr, "Couldn't allocate memory for domain name!\n");
         free(new_node);
+        return -1;
     }
     
     new_node->next = list->head;
