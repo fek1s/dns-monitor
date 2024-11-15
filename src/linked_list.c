@@ -17,7 +17,25 @@ void init_domain_list(DomainList *list){
 }
 
 int add_domain_name(DomainList *list, const char *domain_name){
+    if (domain_exists(list, domain_name)){
+        return 1;
+    }
 
+    DomainNode *new_node = (DomainNode *)malloc(sizeof(DomainNode));
+    if (new_node == NULL){
+        return -1;
+    }
+
+    new_node->domain_name = strdup(domain_name);
+    if (new_node->domain_name == NULL){
+        fprintf(stderr, "Couldn't allocate memory for domain name!\n");
+        free(new_node);
+    }
+    
+    new_node->next = list->head;
+    list->head = new_node;
+
+    return 0;
 }
 
 int domain_exists(DomainList *list, const char *domain_name){
