@@ -8,6 +8,7 @@
 
 
 #include "dns_monitor.h"
+#include "linked_list.h"
 #include <time.h>
 
 // Global variable to stop the packet capture
