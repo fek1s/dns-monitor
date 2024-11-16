@@ -12,6 +12,7 @@
 #ifndef DNS_MONITOR_H
 #define DNS_MONITOR_H
 
+#include <linked_list.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <stdio.h>
@@ -61,12 +62,18 @@
  */
 typedef struct
 {
-    char * interface;
-    char * pcapfile;
-    char * domainsfile;
-    char * translationsfile;
+    char *interface;
+    char *pcapfile;
+    int domain_colecting;
+    char *domainsfile;
+    int translation_colecting;
+    char *translationsfile;
     int verbose;
     int debug;
+    DomainList domain_list;
+    FILE *domains_file;
+    TranslationList translation_list;
+    FILE *translations_file;
 } ProgramArguments;
 
 /**
@@ -145,10 +152,14 @@ int get_link_header_len();
  * @param dst_ip_str Destination IP address of the packet.
  * @param src_port Source port of the packet.
  * @param dst_port Destination port of the packet.
- * @param verbose Flag to enable verbose output.
+ * @param args Pointer to the ProgramArguments structure.
+ * @param domain_list Pointer to the DomainList structure.
+ * @param translation_list Pointer to the TranslationList structure.
  * @param ts Timestamp of the packet.
  */
-void proccees_dns_packet(const unsigned char *dns_payload, int dns_payload_len, const char *src_ip_str, const char *dst_ip_str, uint16_t src_port, uint16_t dst_port, int verbose, const struct timeval ts);
+void proccees_dns_packet(const unsigned char *dns_payload, int dns_payload_len, const char *src_ip_str, 
+                        const char *dst_ip_str, uint16_t src_port, uint16_t dst_port, const ProgramArguments *args, 
+                        DomainList *domain_list,TranslationList *translation_list ,const struct timeval ts);
 
 
 /**
