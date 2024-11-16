@@ -63,6 +63,19 @@ void free_domain_list(DomainList *list){
     list->head = NULL;
 }
 
-void write_domain_list(DomainList *list, const char *filename){
 
+void init_translation_list(TranslationList *list){
+    list->head = NULL;
+}
+
+void free_translation_list(TranslationList *list){
+    TranslationNode *current = list->head;
+    while (current != NULL){
+        TranslationNode *temp = current;
+        current = current->next;
+        free(temp->domain_name);
+        free(temp->translation);
+        free(temp);
+    }
+    list->head = NULL;
 }
