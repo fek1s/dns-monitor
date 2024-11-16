@@ -190,4 +190,45 @@ void parse_dns_header(const unsigned char *dns_payload, uint16_t *id, uint16_t *
  */
 int parse_domain_name(const unsigned char *dns_payload, int dns_payload_len, int offset, char *domain_name);
 
+
+/**
+ * @brief Parses a DNS question section from the DNS payload.
+ *
+ * This function extracts and processes the DNS question section from the provided DNS payload.
+ *
+ * @param dns_payload Pointer to the DNS payload data.
+ * @param dns_payload_len Length of the DNS payload.
+ * @param offset Offset within the DNS payload where the question section starts.
+ * @param qd_count Number of questions in the DNS payload.
+ * @param domain_list Pointer to a DomainList structure where parsed domain names will be stored.
+ * @param domain_file Pointer to a file where domain names will be written.
+ * 
+ * @return The offset after the question section.
+ */
+int parse_dns_question(const unsigned char *dns_payload, int dns_payload_len, int offset, 
+                        u_int16_t qd_count, DomainList *domain_list, FILE *domain_file);
+
+/**
+ * @brief Converts a DNS query type to its string representation.
+ *
+ * This function takes a DNS query type (qtype) as input and returns a 
+ * string that represents the human-readable name of the DNS query type.
+ *
+ * @param qtype The DNS query type to be converted.
+ * @return A pointer to a string representing the DNS query type.
+ */
+char *dns_type_to_string(uint16_t qtype);
+
+
+/**
+ * @brief Converts a DNS class code to its string representation.
+ *
+ * This function takes a DNS class code (as defined in RFC 1035) and returns
+ * a human-readable string that represents the class.
+ *
+ * @param qclass The DNS class code to convert.
+ * @return A constant character pointer to the string representation of the DNS class.
+ */
+const char* dns_class_to_string(uint16_t qclass);
+
 #endif // DNS_MONITOR_H
