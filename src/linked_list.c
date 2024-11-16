@@ -97,7 +97,7 @@ int translation_exists(TranslationList *list, const char *domain_name, const cha
 }
 
 int add_translation(TranslationList *list, const char *domain_name, const char *translation){
-    if (transtation_exists(list, domain_name, translation)){
+    if (translation_exists(list, domain_name, translation)){
         return 1; // Translation already exists
     }
 
