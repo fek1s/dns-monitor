@@ -37,3 +37,5 @@ $(B)/linked_list.o: $(SRC)/linked_list.c $(SRC)/linked_list.h
 .PHONY: clean
 clean:
 	rm -rf $(B) $(BIN)
+	rm -f domain.txt
+	rm -f translation.txt

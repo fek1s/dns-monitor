@@ -10,20 +10,7 @@ void print_usage(){
 }               
 
 ProgramArguments parse_arguments(int argc, char * argv[]){
-    ProgramArguments args = {
-        .interface = NULL,
-        .pcapfile = NULL,
-        .domain_colecting = 0,
-        .domainsfile = NULL,
-        .translation_colecting = 0,
-        .translationsfile = NULL,
-        .verbose = 0,
-        .debug = 0,
-        .domain_list = NULL,
-        .domains_file = NULL,
-        .translation_list = NULL,
-        .translations_file = NULL
-    };
+    ProgramArguments args = {NULL, NULL, 0, NULL, 0, NULL, 0, 0, {NULL}, NULL, {NULL}, NULL};
     int c;
     while ((c = getopt(argc, argv, "i:p:d:t:vg")) != -1){
         switch (c){
@@ -38,7 +25,7 @@ ProgramArguments parse_arguments(int argc, char * argv[]){
                 args.domainsfile = optarg;
                 break;
             case 't':
-                args.translation_colecting = 1;
+            
                 args.translationsfile = optarg;         
                 break;
             case 'v':
