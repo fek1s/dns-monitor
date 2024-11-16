@@ -28,6 +28,25 @@ typedef struct {
     DomainNode *head;
 } DomainList;
 
+/**
+ * @brief Node structure for the translation list.
+ * 
+ */
+typedef struct TranslationNode {
+    char *domain_name;
+    char *translation;
+    struct TranslationNode *next;
+} TranslationNode;
+
+/**
+ * @brief Linked list structure for translations.
+ * 
+ */
+typedef struct {
+    TranslationNode *head;
+} TranslationList;
+
+
 
 /**
  * @brief Initializes a DomainList.
@@ -72,16 +91,20 @@ int domain_exists(DomainList *list, const char *domain_name);
  */
 void free_domain_list(DomainList *list);
 
-/**
- * @brief Writes the domain list to a file.
- * 
- * This function writes the domain list to a file. Each domain is written on a separate line.
- * 
- * @param list A pointer to the DomainList.
- * @param filename The name of the file to write the list to.
- */
-void write_domain_list(DomainList *list, const char *filename);
 
+/**
+ * @brief Initializes a TranslationList.
+ * 
+ * This function sets up the necessary structures and state for a TranslationList
+ * to be used. It should be called before any other operations are performed
+ * on the list.
+ * 
+ * @param list A pointer to the TranslationList to be initialized.
+ */
+void init_translation_list(TranslationList *list);
+
+
+void free_translation_list(TranslationList *list);
 
 
 
