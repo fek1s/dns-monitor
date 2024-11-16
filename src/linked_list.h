@@ -11,6 +11,8 @@
 #ifndef LINKED_LIST_H
 #define LINKED_LIST_H
 
+#include <stdio.h>
+
 /**
  * @brief Node structure for the linked list.
  * 
@@ -69,7 +71,7 @@ void init_domain_list(DomainList *list);
  * @param domain_name The domain name to be added.
  * @return 0 if the domain was added successfully, 1 if the domain already exists.
  */
-int add_domain_name(DomainList *list, const char *domain_name);
+int add_domain_name(DomainList *list, const char *domain_name, FILE *domain_file);
 
 /**
  * @brief Checks if a domain exists in the list.
