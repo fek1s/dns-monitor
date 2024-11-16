@@ -105,11 +105,43 @@ void free_domain_list(DomainList *list);
  */
 void init_translation_list(TranslationList *list);
 
+/**
+ * @brief Frees the memory allocated for the translation list.
+ *
+ * This function deallocates all the memory associated with the given
+ * TranslationList, including all its nodes and their contents.
+ *
+ * @param list A pointer to the TranslationList to be freed.
+ */
 
 void free_translation_list(TranslationList *list);
 
+/**
+ * @brief Checks if a translation exists in the list.
+ *
+ * This function searches the given translation list to determine if there is
+ * an entry that matches the specified domain name and IP address.
+ *
+ * @param list Pointer to the translation list.
+ * @param domain_name The domain name to search for.
+ * @param translation The IP address to search for.
+ * @return 1 if the translation exists, 0 otherwise.
+ */
+int translation_exists(TranslationList *list, const char *domain_name, const char *translation);
 
 
+/**
+ * @brief Adds a new translation to the translation list.
+ *
+ * This function adds a new domain name and its corresponding IP address
+ * to the provided translation list.
+ *
+ * @param list Pointer to the translation list.
+ * @param domain_name The domain name to be added.
+ * @param ip_address The IP address corresponding to the domain name.
+ * @return int Returns 0 on success, or a negative value on error.
+ */
+int add_translation(TranslationList *list, const char *domain_name, const char *ip_address);
 
 
 #endif // LINKED_LIST_H
