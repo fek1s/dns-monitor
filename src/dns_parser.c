@@ -56,6 +56,10 @@ void packet_handler(unsigned char *user, const struct pcap_pkthdr *header, const
     // Casts the user data to a ProgramArguments pointer.
     ProgramArguments *args = (ProgramArguments *)user;
 
+    // TODO 
+    DomainList *domain_list = args->domainsfile ? &args->domain_list : NULL;
+    TranslationList *translation_list = args->translationsfile ? &args->translation_list : NULL;
+
 
     // Get the length of the link-layer header
     int linkhdrlen = get_link_header_len();
@@ -132,7 +136,10 @@ void packet_handler(unsigned char *user, const struct pcap_pkthdr *header, const
 
 
     // Process the DNS packet
-    proccees_dns_packet(dns_payload, dns_payload_len, src_ip_str, dst_ip_str, src_port, dst_port, args->verbose, header->ts);
+    proccees_dns_packet(dns_payload, dns_payload_len, src_ip_str, dst_ip_str, src_port, dst_port,
+                        args, domain_list,
+                        translation_list, 
+                        header->ts);
 
     // Sleep for 2 seconds if the debug flag is set
     if (args->debug){
@@ -140,8 +147,9 @@ void packet_handler(unsigned char *user, const struct pcap_pkthdr *header, const
     }
 }
 
-void proccees_dns_packet(const unsigned char *dns_payload, int dns_payload_len, const char *src_ip_str, const char *dst_ip_str,
-                        uint16_t src_port, uint16_t dst_port, int verbose, const struct timeval ts){
+void proccees_dns_packet(const unsigned char *dns_payload, int dns_payload_len, const char *src_ip_str, 
+                        const char *dst_ip_str, uint16_t src_port, uint16_t dst_port, const ProgramArguments *args, 
+                        DomainList *domain_list,TranslationList *translation_list ,const struct timeval ts){
 
 
     if (dns_payload_len < MIN_DNS_HEADER_LEN)
@@ -171,7 +179,7 @@ void proccees_dns_packet(const unsigned char *dns_payload, int dns_payload_len, 
     int cd = GET_CD(flags);
     int rcode = GET_RCODE(flags);
 
-    if (!verbose){
+    if (args->verbose == 0){
         // Simple output
         printf("%s %s -> %s (%c %d/%d/%d/%d)\n",
                 timestamp, src_ip_str, dst_ip_str, 
@@ -205,6 +213,9 @@ void proccees_dns_packet(const unsigned char *dns_payload, int dns_payload_len, 
         }
 
         printf("Domain: %s\n", domain_name);
+        if (args->domain_colecting){
+            add_domain_name(domain_list, domain_name, args->domains_file);
+        }
         printf("%d\n", offset);
 
         return;
