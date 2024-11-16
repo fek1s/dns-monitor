@@ -84,3 +84,47 @@ void free_translation_list(TranslationList *list){
     }
     list->head = NULL;
 }
+
+int translation_exists(TranslationList *list, const char *domain_name, const char *translation){
+    TranslationNode *current = list->head;
+    while (current != NULL){
+        if (strcmp(current->domain_name, domain_name) == 0 && strcmp(current->translation, translation) == 0){
+            return 1; // Translation exists
+        }
+        current = current->next;
+    }
+    return 0; // Translation doesn't exist
+}
+
+int add_translation(TranslationList *list, const char *domain_name, const char *translation){
+    if (transtation_exists(list, domain_name, translation)){
+        return 1; // Translation already exists
+    }
+
+    TranslationNode *new_node = (TranslationNode *)malloc(sizeof(TranslationNode));
+    if (new_node == NULL){
+        fprintf(stderr, "Couldn't allocate memory for translation node!\n");
+        return -1;
+    }
+
+    new_node->domain_name = strdup(domain_name);
+    if (new_node->domain_name == NULL){
+        fprintf(stderr, "Couldn't allocate memory for domain name!\n");
+        free(new_node);
+        return -1;
+    }
+
+    new_node->translation = strdup(translation);
+    if (new_node->translation == NULL){
+        fprintf(stderr, "Couldn't allocate memory for translation!\n");
+        free(new_node->domain_name);
+        free(new_node);
+        return -1;
+    }
+
+    new_node->next = list->head;
+    list->head = new_node;
+
+    return 0; // Success
+} 
+    
