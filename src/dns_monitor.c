@@ -40,7 +40,7 @@ int main(int argc, char * argv[]) {
         }
     }
 
-    if (args.translationsfile){
+    if (args.translation_colecting){
         args.translations_file = fopen(args.translationsfile, "w");
         if (args.translations_file == NULL){
             fprintf(stderr, "Couldn't open translations file %s\n", args.translationsfile);
