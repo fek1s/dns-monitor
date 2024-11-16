@@ -201,27 +201,20 @@ void proccees_dns_packet(const unsigned char *dns_payload, int dns_payload_len, 
                qr, opcode, aa, tc, rd, ra, ad, cd, rcode);
         printf("\n");
 
-        printf("====================\n");
-
         int offset = MIN_DNS_HEADER_LEN;
 
         char domain_name[MAX_DOMAIN_NAME_LEN];
-        offset += parse_domain_name(dns_payload, dns_payload_len, offset, domain_name);
-        if (offset < 0){
-            fprintf(stderr, "Failed to parse domain name!\n");
-            return;
-        }
-
-        printf("Domain: %s\n", domain_name);
-        if (args->domain_colecting){
-            add_domain_name(domain_list, domain_name, args->domains_file);
-        }
+        parse_domain_name(dns_payload, dns_payload_len, offset, domain_name);
+        //printf("Domain: %s\n", domain_name);
+        
         if (args->translation_colecting){
             if (!(add_translation(translation_list, domain_name, src_ip_str))){
                 fprintf(args->translations_file, "%s %s\n", domain_name, src_ip_str);
             }
             
         }
+        
+        offset = parse_dns_question(dns_payload, dns_payload_len, offset, qd_count, domain_list, args->domains_file);
         printf("%d\n", offset);
 
         return;
@@ -336,4 +329,111 @@ int parse_domain_name(const unsigned char *dns_payload, int dns_payload_len, int
     domain_name[domain_name_len] = '\0'; // Null-terminate the domain name
 
     return bytes_consumed;
+}
+
+int parse_dns_question(const unsigned char *dns_payload, int dns_payload_len, int offset, 
+                        u_int16_t qd_count, DomainList *domain_list, FILE *domain_file){
+    if (qd_count == 0) return offset;
+
+    printf("[Question Section]\n");
+
+    for (int i = 0; i < qd_count; i++){
+        char domain_name[MAX_DOMAIN_NAME_LEN];
+        int bytes_consumed = parse_domain_name(dns_payload, dns_payload_len, offset, domain_name);
+        if (bytes_consumed < 0){
+            fprintf(stderr, "Failed to parse domain name!\n");
+            return -1;
+        }
+
+        // Move the offset past the domain name
+        offset += bytes_consumed;
+
+        // Make sure there is enough space for the QTYPE and QCLASS fields
+        if (offset + 4 > dns_payload_len){
+            fprintf(stderr, "Invalid question section length!\n");
+            return -1;
+        }
+
+        uint16_t qtype = EXTRACT_16BITS(dns_payload, offset);
+        offset += 2; // Move the offset past the QTYPE field
+        uint16_t qclass = EXTRACT_16BITS(dns_payload, offset);
+        offset += 2; // Move the offset past the QCLASS field
+
+        // Print the question
+        printf("%s %s %s\n", domain_name, dns_class_to_string(qclass) ,dns_type_to_string(qtype));
+
+        // Add the domain name to the list
+        if (domain_list != NULL && domain_file != NULL){
+            // Write the domain name to the file if it doesn't exist in the list
+            if(!(add_domain_name(domain_list, domain_name))){
+                fprintf(domain_file, "%s\n", domain_name);
+                fflush(domain_file);
+            }
+        }
+    }
+
+    printf("\n");
+    return offset;
+}
+
+char *dns_type_to_string(uint16_t qtype){
+    switch (qtype) {
+        case 1:
+            return "A";          // IPv4 address
+        case 2:
+            return "NS";         // Authoritative Name Server
+        case 5:
+            return "CNAME";      // Canonical Name
+        case 6:
+            return "SOA";        // Start of a zone of authority
+        case 12:
+            return "PTR";        // Domain name pointer
+        case 15:
+            return "MX";         // Mail exchange
+        case 16:
+            return "TXT";        // Text records
+        case 28:
+            return "AAAA";       // IPv6 address
+        case 33:
+            return "SRV";        // Service locator
+        case 35:
+            return "NAPTR";      // Naming Authority Pointer
+        case 39:
+            return "DNAME";      // Delegation Name
+        case 41:
+            return "OPT";        // Option
+        case 43:
+            return "DS";         // Delegation Signer
+        case 46:
+            return "RRSIG";      // DNSSEC signature
+        case 47:
+            return "NSEC";       // Next Secure record
+        case 48:
+            return "DNSKEY";     // DNS Key record
+        case 257:
+            return "CAA";        // Certification Authority Authorization
+        case 252:
+            return "AXFR";       // Request for a zone transfer
+        case 255:
+            return "ANY";        // All cached records
+        default:
+            return "Unknown";    // Unknown or unsupported type
+    }
+}
+
+const char* dns_class_to_string(uint16_t qclass) {
+    switch (qclass) {
+        case 1:
+            return "IN";
+        case 3:
+            return "CH";
+        case 4:
+            return "HS";
+        case 254:
+            return "NONE";
+        case 255:
+            return "ANY";
+        default:
+            return "Unknown";
+    }
 }
