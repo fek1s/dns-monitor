@@ -25,7 +25,7 @@ ProgramArguments parse_arguments(int argc, char * argv[]){
                 args.domainsfile = optarg;
                 break;
             case 't':
-            
+                args.translation_colecting = 1;
                 args.translationsfile = optarg;         
                 break;
             case 'v':
