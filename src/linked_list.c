@@ -16,7 +16,7 @@ void init_domain_list(DomainList *list){
     list->head = NULL;
 }
 
-int add_domain_name(DomainList *list, const char *domain_name){
+int add_domain_name(DomainList *list, const char *domain_name, FILE *domain_file){
     if (domain_exists(list, domain_name)){
         return 1; // Domain already exists
     }
@@ -36,6 +36,11 @@ int add_domain_name(DomainList *list, const char *domain_name){
     
     new_node->next = list->head;
     list->head = new_node;
+
+    if (domain_file != NULL){
+        fprintf(domain_file, "%s\n", domain_name);
+        fflush(domain_file);
+    }
 
     return 0; // Success
 }
