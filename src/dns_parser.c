@@ -216,6 +216,10 @@ void proccees_dns_packet(const unsigned char *dns_payload, int dns_payload_len, 
         if (args->domain_colecting){
             add_domain_name(domain_list, domain_name, args->domains_file);
         }
+        if (args->translation_colecting){
+            add_translation(translation_list, domain_name, src_ip_str);
+            fprintf(args->translations_file, "%s %s\n", domain_name, src_ip_str);
+        }
         printf("%d\n", offset);
 
         return;
