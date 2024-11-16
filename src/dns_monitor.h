@@ -231,4 +231,9 @@ char *dns_type_to_string(uint16_t qtype);
  */
 const char* dns_class_to_string(uint16_t qclass);
 
+
+int parse_dns_rrs(const char *section_name, const unsigned char *buffer, int buffer_len, int offset, uint16_t rr_count,
+                  DomainList *domain_list, TranslationList *translation_list, FILE *domain_file, FILE *translation_file);
+
+
 #endif // DNS_MONITOR_H
