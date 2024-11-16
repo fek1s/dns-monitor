@@ -12,7 +12,7 @@
 #ifndef DNS_MONITOR_H
 #define DNS_MONITOR_H
 
-#include <linked_list.h>
+#include "linked_list.h"
 #include <stdlib.h>
 #include <unistd.h>
 #include <stdio.h>
