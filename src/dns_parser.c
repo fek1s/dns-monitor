@@ -215,7 +215,9 @@ void proccees_dns_packet(const unsigned char *dns_payload, int dns_payload_len, 
         }
         
         offset = parse_dns_question(dns_payload, dns_payload_len, offset, qd_count, domain_list, args->domains_file);
-        printf("%d\n", offset);
+        offset = parse_dns_rrs("Answer Section", dns_payload, dns_payload_len, offset, an_count, domain_list, translation_list, args->domains_file, args->translations_file);
+        offset = parse_dns_rrs("Authority Section", dns_payload, dns_payload_len, offset, ns_count, domain_list, translation_list, args->domains_file, args->translations_file);
+        offset = parse_dns_rrs("Additional Section", dns_payload, dns_payload_len, offset, ar_count, domain_list, translation_list, args->domains_file, args->translations_file);
 
         return;
     }
@@ -360,7 +362,7 @@ int parse_dns_question(const unsigned char *dns_payload, int dns_payload_len, in
         offset += 2; // Move the offset past the QCLASS field
 
         // Print the question
-        printf("%s %s %s\n", domain_name, dns_class_to_string(qclass) ,dns_type_to_string(qtype));
+        printf("%s. %s %s\n", domain_name, dns_class_to_string(qclass) ,dns_type_to_string(qtype));
 
         // Add the domain name to the list
         if (domain_list != NULL && domain_file != NULL){
@@ -436,4 +438,130 @@ const char* dns_class_to_string(uint16_t qclass) {
         default:
             return "Unknown";
     }
+}
+
+int parse_dns_rrs(const char *section_name, const unsigned char *dns_payload, int dns_payload_len, int offset, uint16_t rr_count,
+                    DomainList *domain_list, TranslationList *translation_list, FILE *domain_file, FILE *translation_file){ 
+
+    if (rr_count == 0) return offset;
+
+    printf("[%s]\n", section_name);
+
+    for (int i = 0; i < rr_count; i++)
+    {
+        char domain_name[MAX_DOMAIN_NAME_LEN];
+        int bytes_consumed = parse_domain_name(dns_payload, dns_payload_len, offset, domain_name);
+        if (bytes_consumed < 0){
+            fprintf(stderr, "Failed to parse domain name!\n");
+            return -1;
+        }
+
+        // Move the offset past the domain name
+        offset += bytes_consumed;
+
+        // Make sure there is enough space for the TYPE, CLASS, TTL, and RDLENGTH fields
+        if (offset + 10 > dns_payload_len){
+            fprintf(stderr, "Invalid RR length!\n");
+            return -1;
+        }
+
+        uint16_t rr_type = EXTRACT_16BITS(dns_payload, offset);
+        offset += 2; // Move the offset past the TYPE field
+        uint16_t rr_class = EXTRACT_16BITS(dns_payload, offset);
+        offset += 2; // Move the offset past the CLASS field
+        
+        // TODO: Need to make extract 32 bits
+        uint32_t ttl = EXTRACT_32BITS(dns_payload, offset);
+        offset += 4; // Move the offset past the TTL field
+        uint16_t rdlength = EXTRACT_16BITS(dns_payload, offset);
+        offset += 2; // Move the offset past the RDLENGTH field
+
+        // Make sure there is enough space for the RDATA field
+        if (offset + rdlength > dns_payload_len){
+            fprintf(stderr, "Invalid RDATA length!\n");
+            return -1;
+        }
+
+        // Print the RR
+        printf("%s. %u %s %s ", domain_name, ttl, dns_class_to_string(rr_class), dns_type_to_string(rr_type));
+
+        // Process the RDATA based on the RR type
+        switch (rr_type){
+            case 1: // A
+            {
+                if (rdlength == 4) {
+                    char ip_str[INET_ADDRSTRLEN];
+                    inet_ntop(AF_INET, dns_payload + offset, ip_str, sizeof(ip_str));
+                    printf("%s\n", ip_str);
+
+                    // Collect the translation
+                    // TODO
+                    if (translation_list != NULL && translation_file != NULL){
+                        if (!(add_translation(translation_list, domain_name, ip_str))){
+                            fprintf(translation_file, "%s %s\n", domain_name, ip_str);
+                            fflush(translation_file);
+                        }
+                    }
+
+                    offset += rdlength;
+                } else {
+                    fprintf(stderr, "Invalid A record length!\n");
+                    offset += rdlength;
+                }
+            }
+            break;
+
+            case 2: // NS TODO
+            break;
+            case 5: // CNAME TODO
+            break;
+            case 6: // SOA TODO
+            break;
+            case 12: // PTR TODO
+            break;
+            case 15: // MX TODO
+            break;
+            case 16: // TXT
+            case 28: // AAAA TODO
+            {
+                if (rdlength == 16) {
+                    char ip_str[INET6_ADDRSTRLEN];
+                    inet_ntop(AF_INET6, dns_payload + offset, ip_str, sizeof(ip_str));
+                    printf("%s\n", ip_str);
+
+                    // Collect the translation
+                    // TODO
+                    if (translation_list != NULL && translation_file != NULL){
+                        if (!(add_translation(translation_list, domain_name, ip_str))){
+                            fprintf(translation_file, "%s %s\n", domain_name, ip_str);
+                            fflush(translation_file);
+                        }
+                    }
+
+                    offset += rdlength;
+                } else {
+                    fprintf(stderr, "Invalid AAAA record length!\n");
+                    offset += rdlength;
+                }
+            }
+            break;
+            case 33: // SRV  TODO
+            case 35: // NAPTR
+            case 39: // DNAME
+            case 41: // OPT
+            case 43: // DS
+            case 46: // RRSIG
+            case 47: // NSEC
+            case 48: // DNSKEY
+            case 257: // CAA
+            case 252: // AXFR
+            break;
+            default:
+                fprintf(stderr, "Unsupported RR type: %u\n", rr_type);
+                offset += rdlength;
+                break;
+        }    
+    }
+    printf("\n");
+    return offset;
 }
