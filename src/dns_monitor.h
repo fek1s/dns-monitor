@@ -38,6 +38,10 @@
 // Macro for extracting 16 bits from a byte array at a given offset
 #define EXTRACT_16BITS(data, offset) (((data)[offset] << 8) | (data)[offset + 1])
 
+// Macro for extracting 32 bits from a byte array at a given offset
+#define EXTRACT_32BITS(data, offset) \
+    ((uint32_t)((data)[offset] << 24 | (data)[offset + 1] << 16 | (data)[offset + 2] << 8 | (data)[offset + 3]))
+
 // Offsets of fields in the DNS header
 #define DNS_ID_OFFSET 0
 #define DNS_FLAGS_OFFSET 2
