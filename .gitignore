@@ -1,5 +1,5 @@
 # Source: https://github.com/github/gitignore/blob/main/C.gitignore
-
+*.txt
 # Binary
 dns-monitor
 
