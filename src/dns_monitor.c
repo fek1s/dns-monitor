@@ -24,21 +24,25 @@ int main(int argc, char * argv[]) {
         
     ProgramArguments args = parse_arguments(argc, argv);
 
-    // Open domains and translations files if specified
-    FILE *domains_file = NULL;
-    FILE *translations_file = NULL;
+    if (args.domain_colecting){
+        init_domain_list(&args.domain_list);
+    }
+    if (args.translation_colecting){
+        init_translation_list(&args.translation_list);
+    }
 
-    if (args.domainsfile){
-        domains_file = fopen(args.domainsfile, "w");
-        if (domains_file == NULL){
+    // Open domains and translations files if specified
+    if (args.domain_colecting){
+        args.domains_file = fopen(args.domainsfile, "w");
+        if (args.domains_file == NULL){
             fprintf(stderr, "Couldn't open domains file %s\n", args.domainsfile);
             return 1;
         }
     }
 
     if (args.translationsfile){
-        translations_file = fopen(args.translationsfile, "w");
-        if (translations_file == NULL){
+        args.translations_file = fopen(args.translationsfile, "w");
+        if (args.translations_file == NULL){
             fprintf(stderr, "Couldn't open translations file %s\n", args.translationsfile);
             return 1;
         }
@@ -52,8 +56,8 @@ int main(int argc, char * argv[]) {
     // Open the pcap handle
     handle = pcap_handle_ctor(args.interface, args.pcapfile);
     if (handle == NULL){
-        if (domains_file) fclose(domains_file);
-        if (translations_file) fclose(translations_file);
+        if (args.domain_colecting) fclose(args.domains_file);
+        if (args.translation_colecting) fclose(args.translations_file);
         return 1;
     }
 
@@ -66,8 +70,15 @@ int main(int argc, char * argv[]) {
 
     // Clean up
     pcap_close(handle);
-    if (domains_file) fclose(domains_file);
-    if (translations_file) fclose(translations_file);
+
+    if (args.domain_colecting) {
+        free_domain_list(&args.domain_list);
+        fclose(args.domains_file);
+    }
+    if (args.translation_colecting) {
+        free_translation_list(&args.translation_list);
+        fclose(args.translations_file);
+    }
 
     
     return 0;
