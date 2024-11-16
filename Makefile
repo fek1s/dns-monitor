@@ -21,17 +21,17 @@ $(B)/dns_monitor.o: $(SRC)/dns_monitor.c
 $(B)/arg_parser.o: $(SRC)/arg_parser.c $(SRC)/dns_monitor.h
 	@mkdir -p build
 	@echo "Compiling arg_parser.o"
-	$(CC) $(CFLAGS) -c $(SRC)/arg_parser.c $(SRC)/dns_monitor.h -o $@
+	$(CC) $(CFLAGS) -c $(SRC)/arg_parser.c -o $@
 
 $(B)/dns_parser.o: $(SRC)/dns_parser.c $(SRC)/dns_monitor.h
 	@mkdir -p build
 	@echo "Compiling dns_parser.o"
-	$(CC) $(CFLAGS) -c $(SRC)/dns_parser.c $(SRC)/dns_monitor.h -o $@
+	$(CC) $(CFLAGS) -c $(SRC)/dns_parser.c -o $@
 
 $(B)/linked_list.o: $(SRC)/linked_list.c $(SRC)/linked_list.h
 	@mkdir -p build
 	@echo "Compiling linked_list.o"
-	$(CC) $(CFLAGS) -c $(SRC)/linked_list.c $(SRC)/linked_list.h -o $@
+	$(CC) $(CFLAGS) -c $(SRC)/linked_list.c -o $@
 
 # Clean target
 .PHONY: clean

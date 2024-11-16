@@ -20,10 +20,7 @@
 #include <pcap/pcap.h>
 #include <netinet/in.h>       // Include this for IP address structures
 #include <netinet/if_ether.h>  // For struct ether_header
-#include <netinet/ip.h>        // For struct ip (IPv4 header)
-#include <netinet/ip_icmp.h>   // For struct icmp (ICMP header)
 #include <netinet/ip6.h>       // For struct ip6_hdr (IPv6 header)
-#include <netinet/udp.h>       // For struct udphdr (UDP header)
 #include <arpa/inet.h>         // For inet_ntop to convert IP addresses to strings
 #include <string.h>            // For memset, memcpy
 
@@ -75,6 +72,29 @@ typedef struct
     TranslationList translation_list;
     FILE *translations_file;
 } ProgramArguments;
+
+
+struct iphdr {
+    uint8_t ihl:4, version:4;
+    uint8_t tos;
+    uint16_t tot_len;
+    uint16_t id;
+    uint16_t frag_off;
+    uint8_t ttl;
+    uint8_t protocol;
+    uint16_t check;
+    uint32_t saddr;
+    uint32_t daddr;
+};
+
+struct udphdr {
+    uint16_t source;  // Source port
+    uint16_t dest;    // Destination port
+    uint16_t len;     // Length of UDP payload and header
+    uint16_t check;   // Checksum
+};
+
+
 
 /**
  * @brief Prints the usage of the program to the standard error.
