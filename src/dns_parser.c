@@ -511,15 +511,31 @@ int parse_dns_rrs(const char *section_name, const unsigned char *dns_payload, in
             }
             break;
 
-            case 2: // NS TODO
-            {
+            case 2: // NS 
+            {   
+                char ns_domain_name[MAX_DOMAIN_NAME_LEN];
+                int bytes_consumed = parse_domain_name(dns_payload, dns_payload_len, offset, ns_domain_name);
+                if (bytes_consumed < 0){
+                    fprintf(stderr, "Failed to parse NS domain name!\n");
+                    return -1;
+                }
+                printf("%s\n", ns_domain_name);
+
+                // Collect the domain name
+                if (domain_list != NULL && domain_file != NULL){
+                    if (!(add_domain_name(domain_list, ns_domain_name))){
+                        fprintf(domain_file, "%s\n", ns_domain_name);
+                        fflush(domain_file);
+                    }
+                }
+
                 offset += rdlength;
                 break;
                 
             }
             case 5: // CNAME TODO
             break;
-            case 6: // SOA TODO
+            case 6: // SOA
             {
                 char mname[MAX_DOMAIN_NAME_LEN];
                 int bytes_consumed = parse_domain_name(dns_payload, dns_payload_len, offset, mname);
