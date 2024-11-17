@@ -2,6 +2,7 @@
 *.txt
 # Binary
 dns-monitor
+test
 
 *.pcapng
 *.pcap

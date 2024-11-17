@@ -33,6 +33,18 @@ $(B)/linked_list.o: $(SRC)/linked_list.c $(SRC)/linked_list.h
 	@echo "Compiling linked_list.o"
 	$(CC) $(CFLAGS) -c $(SRC)/linked_list.c -o $@
 
+# Test object files (excluding main)
+TEST_OBJS = $(B)/arg_parser.o $(B)/dns_parser.o $(B)/linked_list.o
+
+test: $(TEST_OBJS) tests/test_main.c
+	@mkdir -p build
+	@echo "Compiling test_main.o"
+	$(CC) $(CFLAGS) -c tests/test_main.c -o $(B)/test_main.o
+	@echo "Linking objects to executable"
+	$(CC) $(CFLAGS) $(TEST_OBJS) $(B)/test_main.o -o test -lcunit $(LDFLAGS)
+	@echo "Running tests"
+	./test
+
 # Clean target
 .PHONY: clean
 clean:

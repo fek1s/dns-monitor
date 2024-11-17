@@ -211,20 +211,23 @@ void proccees_dns_packet(const unsigned char *dns_payload, int dns_payload_len, 
     return;
 }
 
-void parse_dns_header(const unsigned char *dns_payload, uint16_t *id, uint16_t *flags, uint16_t *qd_count,
-                        uint16_t *an_count, u_int16_t *ns_count, uint16_t *ar_count){
+int parse_dns_header(const unsigned char *dns_payload, uint16_t *id, uint16_t *flags, uint16_t *qd_count,
+                        uint16_t *an_count, uint16_t *ns_count, uint16_t *ar_count){
     if (!dns_payload)
     {   
         fprintf(stderr, "DNS payload is NULL!\n");
-        return;
+        return -1;
     }
 
+    
     *id = EXTRACT_16BITS(dns_payload, DNS_ID_OFFSET);
     *flags = EXTRACT_16BITS(dns_payload, DNS_FLAGS_OFFSET);
     *qd_count = EXTRACT_16BITS(dns_payload, DNS_QDCOUNT_OFFSET);
     *an_count = EXTRACT_16BITS(dns_payload, DNS_ANCOUNT_OFFSET);
     *ns_count = EXTRACT_16BITS(dns_payload, DNS_NSCOUNT_OFFSET);
     *ar_count = EXTRACT_16BITS(dns_payload, DNS_ARCOUNT_OFFSET);
+
+    return 0;
 }
 
 int parse_domain_name(const unsigned char *dns_payload, int dns_payload_len, int offset, char *domain_name){
