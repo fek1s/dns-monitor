@@ -230,7 +230,7 @@ int parse_domain_name(const unsigned char *dns_payload, int dns_payload_len, int
  * @return The offset after the question section.
  */
 int parse_dns_question(const unsigned char *dns_payload, int dns_payload_len, int offset, 
-                        u_int16_t qd_count, DomainList *domain_list, FILE *domain_file);
+                        u_int16_t qd_count, DomainList *domain_list, FILE *domain_file, int verbose);
 
 /**
  * @brief Converts a DNS query type to its string representation.
@@ -255,9 +255,30 @@ char *dns_type_to_string(uint16_t qtype);
  */
 const char* dns_class_to_string(uint16_t qclass);
 
+/**
+ * @brief Parses DNS resource records (RRs) from a given buffer.
+ *
+ * This function processes DNS resource records from the specified section of the buffer,
+ * starting at the given offset. It extracts and processes the RRs, updating the provided
+ * domain and translation lists, and optionally writing the results to the specified files.
+ *
+ * @param section_name The name of the DNS section being parsed (e.g., "Answer", "Authority").
+ * @param buffer The buffer containing the DNS message.
+ * @param buffer_len The length of the buffer.
+ * @param offset The starting offset within the buffer to begin parsing.
+ * @param rr_count The number of resource records to parse.
+ * @param domain_list A pointer to the DomainList structure to be updated with parsed domains.
+ * @param translation_list A pointer to the TranslationList structure to be updated with parsed translations.
+ * @param domain_file A file pointer to write domain information, or NULL if not used.
+ * @param translation_file A file pointer to write translation information, or NULL if not used.
+ * @param verbose A flag indicating whether to print verbose output (non-zero for verbose).
+ *
+ * @return The offset after parsing the resource records.
+ * 
+ */
 
 int parse_dns_rrs(const char *section_name, const unsigned char *buffer, int buffer_len, int offset, uint16_t rr_count,
-                  DomainList *domain_list, TranslationList *translation_list, FILE *domain_file, FILE *translation_file);
+                  DomainList *domain_list, TranslationList *translation_list, FILE *domain_file, FILE *translation_file, int verbose);
 
 
 #endif // DNS_MONITOR_H
