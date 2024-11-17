@@ -39,7 +39,6 @@ int get_link_header_len() {
             linkhdrlen = 24;
             break;
         default:
-            printf("Unsupported datalink type (%d)\n", linktype);
             linkhdrlen = 0;
     }
     return linkhdrlen;
@@ -56,7 +55,6 @@ void packet_handler(unsigned char *user, const struct pcap_pkthdr *header, const
     // Casts the user data to a ProgramArguments pointer.
     ProgramArguments *args = (ProgramArguments *)user;
 
-    // TODO 
     DomainList *domain_list = args->domainsfile ? &args->domain_list : NULL;
     TranslationList *translation_list = args->translationsfile ? &args->translation_list : NULL;
 
@@ -187,8 +185,6 @@ void proccees_dns_packet(const unsigned char *dns_payload, int dns_payload_len, 
                 qd_count, an_count, ns_count, ar_count);
                 
         printf("\n");
-
-        return;
     } else {
         // Verbose output
         printf("Timestamp: %s\n", timestamp);
@@ -200,28 +196,19 @@ void proccees_dns_packet(const unsigned char *dns_payload, int dns_payload_len, 
         printf("Flags: QR=%d, OPCODE=%d, AA=%d, TC=%d, RD=%d, RA=%d, AD=%d, CD=%d, RCODE=%d\n",
                qr, opcode, aa, tc, rd, ra, ad, cd, rcode);
         printf("\n");
-
-        int offset = MIN_DNS_HEADER_LEN;
-
-        char domain_name[MAX_DOMAIN_NAME_LEN];
-        parse_domain_name(dns_payload, dns_payload_len, offset, domain_name);
-        //printf("Domain: %s\n", domain_name);
-        
-        if (args->translation_colecting){
-            if (!(add_translation(translation_list, domain_name, src_ip_str))){
-                fprintf(args->translations_file, "%s %s\n", domain_name, src_ip_str);
-            }
-            
-        }
-        
-        offset = parse_dns_question(dns_payload, dns_payload_len, offset, qd_count, domain_list, args->domains_file);
-        offset = parse_dns_rrs("Answer Section", dns_payload, dns_payload_len, offset, an_count, domain_list, translation_list, args->domains_file, args->translations_file);
-        offset = parse_dns_rrs("Authority Section", dns_payload, dns_payload_len, offset, ns_count, domain_list, translation_list, args->domains_file, args->translations_file);
-        offset = parse_dns_rrs("Additional Section", dns_payload, dns_payload_len, offset, ar_count, domain_list, translation_list, args->domains_file, args->translations_file);
-        printf("====================\n");
-
-        return;
     }
+
+    int offset = MIN_DNS_HEADER_LEN;
+    offset = parse_dns_question(dns_payload, dns_payload_len, offset, qd_count, domain_list, args->domains_file, args->verbose);
+    offset = parse_dns_rrs("Answer Section", dns_payload, dns_payload_len, offset, an_count, domain_list, translation_list, args->domains_file, args->translations_file, args->verbose);
+    offset = parse_dns_rrs("Authority Section", dns_payload, dns_payload_len, offset, ns_count, domain_list, translation_list, args->domains_file, args->translations_file, args->verbose);
+    offset = parse_dns_rrs("Additional Section", dns_payload, dns_payload_len, offset, ar_count, domain_list, translation_list, args->domains_file, args->translations_file, args->verbose);
+
+    if (args->verbose){
+        printf("====================\n");
+    }
+
+    return;
 }
 
 void parse_dns_header(const unsigned char *dns_payload, uint16_t *id, uint16_t *flags, uint16_t *qd_count,
@@ -240,15 +227,6 @@ void parse_dns_header(const unsigned char *dns_payload, uint16_t *id, uint16_t *
     *ar_count = EXTRACT_16BITS(dns_payload, DNS_ARCOUNT_OFFSET);
 }
 
-/**
- * @brief Parses the domain name from the DNS payload.
- * 
- * This function extracts the domain name from the DNS payload starting at the given offset.
- * @param dns_payload Pointer to the DNS payload.
- * @param dns_payload_len Length of the DNS payload.
- * @param offset Offset in the DNS payload where the domain name starts.
- * @param domain_name Pointer to a buffer where the domain name will be stored.
- */
 int parse_domain_name(const unsigned char *dns_payload, int dns_payload_len, int offset, char *domain_name){
     int offset_start = offset;
     int domain_name_len = 0;
@@ -335,10 +313,12 @@ int parse_domain_name(const unsigned char *dns_payload, int dns_payload_len, int
 }
 
 int parse_dns_question(const unsigned char *dns_payload, int dns_payload_len, int offset, 
-                        u_int16_t qd_count, DomainList *domain_list, FILE *domain_file){
+                        u_int16_t qd_count, DomainList *domain_list, FILE *domain_file, int verbose){
     if (qd_count == 0) return offset;
 
-    printf("[Question Section]\n");
+    if (verbose){
+        printf("[Question Section]\n");
+    }
 
     for (int i = 0; i < qd_count; i++){
         char domain_name[MAX_DOMAIN_NAME_LEN];
@@ -363,8 +343,9 @@ int parse_dns_question(const unsigned char *dns_payload, int dns_payload_len, in
         offset += 2; // Move the offset past the QCLASS field
 
         // Print the question
-        printf("%s. %s %s\n", domain_name, dns_class_to_string(qclass) ,dns_type_to_string(qtype));
-
+        if (verbose){
+            printf("%s. %s %s\n", domain_name, dns_class_to_string(qclass) ,dns_type_to_string(qtype));
+        }
         // Add the domain name to the list
         if (domain_list != NULL && domain_file != NULL){
             // Write the domain name to the file if it doesn't exist in the list
@@ -375,7 +356,6 @@ int parse_dns_question(const unsigned char *dns_payload, int dns_payload_len, in
         }
     }
 
-    //printf("\n");
     return offset;
 }
 
@@ -442,11 +422,13 @@ const char* dns_class_to_string(uint16_t qclass) {
 }
 
 int parse_dns_rrs(const char *section_name, const unsigned char *dns_payload, int dns_payload_len, int offset, uint16_t rr_count,
-                    DomainList *domain_list, TranslationList *translation_list, FILE *domain_file, FILE *translation_file){ 
+                    DomainList *domain_list, TranslationList *translation_list, FILE *domain_file, FILE *translation_file, int verbose){ 
 
     if (rr_count == 0) return offset;
 
-    printf("\n[%s]\n", section_name);
+    if (verbose){
+        printf("\n[%s]\n", section_name);
+    }
 
     for (int i = 0; i < rr_count; i++)
     {
@@ -484,8 +466,9 @@ int parse_dns_rrs(const char *section_name, const unsigned char *dns_payload, in
         }
 
         // Print the RR
-        printf("%s. %u %s %s ", domain_name, ttl, dns_class_to_string(rr_class), dns_type_to_string(rr_type));
-
+        if (verbose){
+            printf("%s. %u %s %s ", domain_name, ttl, dns_class_to_string(rr_class), dns_type_to_string(rr_type));
+        }
         // Process the RDATA based on the RR type
         switch (rr_type){
             case 1: // A
@@ -493,7 +476,9 @@ int parse_dns_rrs(const char *section_name, const unsigned char *dns_payload, in
                 if (rdlength == 4) {
                     char ip_str[INET_ADDRSTRLEN];
                     inet_ntop(AF_INET, dns_payload + offset, ip_str, sizeof(ip_str));
-                    printf("%s\n", ip_str);
+                    if (verbose){
+                        printf("%s\n", ip_str);
+                    }
 
                     // Collect the translation
                     if (translation_list != NULL && translation_file != NULL){
@@ -519,7 +504,10 @@ int parse_dns_rrs(const char *section_name, const unsigned char *dns_payload, in
                     fprintf(stderr, "Failed to parse NS domain name!\n");
                     return -1;
                 }
-                printf("%s\n", ns_domain_name);
+
+                if (verbose){
+                    printf("%s\n", ns_domain_name);
+                }
 
                 // Collect the domain name
                 if (domain_list != NULL && domain_file != NULL){
@@ -533,7 +521,30 @@ int parse_dns_rrs(const char *section_name, const unsigned char *dns_payload, in
                 break;
                 
             }
-            case 5: // CNAME TODO
+            case 5: // CNAME 
+            {
+                char cname_domain_name[MAX_DOMAIN_NAME_LEN];
+                int bytes_consumed = parse_domain_name(dns_payload, dns_payload_len, offset, cname_domain_name);
+                if (bytes_consumed < 0){
+                    fprintf(stderr, "Failed to parse CNAME domain name!\n");
+                    return -1;
+                }
+
+                if (verbose){
+                    printf("%s\n", cname_domain_name);
+                }
+
+                // Collect the domain name
+                if (domain_list != NULL && domain_file != NULL){
+                    if (!(add_domain_name(domain_list, cname_domain_name))){
+                        fprintf(domain_file, "%s\n", cname_domain_name);
+                        fflush(domain_file);
+                    }
+                }
+
+                offset += rdlength;
+                break;
+            }
             break;
             case 6: // SOA
             {
@@ -570,7 +581,9 @@ int parse_dns_rrs(const char *section_name, const unsigned char *dns_payload, in
                 uint32_t minimum = EXTRACT_32BITS(dns_payload, offset);
                 offset += 4; // Move the offset past the MINIMUM field
 
-                printf("%s %s %u %u %u %u %u\n", mname, rname, serial, refresh, retry, expire, minimum);
+                if (verbose){
+                    printf("%s %s %u %u %u %u %u\n", mname, rname, serial, refresh, retry, expire, minimum);
+                }
 
                 // Collect the domain name
                 if (domain_list != NULL && domain_file != NULL){
@@ -594,7 +607,10 @@ int parse_dns_rrs(const char *section_name, const unsigned char *dns_payload, in
                     fprintf(stderr, "Failed to parse PTR domain name!\n");
                     return -1;
                 }
-                printf("%s\n", ptr_domain_name);
+
+                if (verbose){
+                    printf("%s\n", ptr_domain_name);
+                }
 
                 // Collect the domain name
                 if (domain_list != NULL && domain_file != NULL){
@@ -624,26 +640,31 @@ int parse_dns_rrs(const char *section_name, const unsigned char *dns_payload, in
                     fprintf(stderr, "Failed to parse MX domain name!\n");
                     return -1;
                 }
-                printf("%u %s\n", preference, mx_domain_name);
+
+                if (verbose){
+                    printf("%u %s\n", preference, mx_domain_name);
+                }
 
                 // Collect the domain name
-                if (domain_list != NULL && domain_file != NULL){
-                    if (!(add_domain_name(domain_list, mx_domain_name))){
-                        fprintf(domain_file, "%s\n", mx_domain_name);
-                        fflush(domain_file);
-                    }
-                }
+                // if (domain_list != NULL && domain_file != NULL){
+                //     if (!(add_domain_name(domain_list, mx_domain_name))){
+                //         fprintf(domain_file, "%s\n", mx_domain_name);
+                //         fflush(domain_file);
+                //     }
+                // }
 
                 offset += bytes_consumed;
                 break;
             }
-            case 16: // TXT
             case 28: // AAAA
             {
                 if (rdlength == 16) {
                     char ip_str[INET6_ADDRSTRLEN];
                     inet_ntop(AF_INET6, dns_payload + offset, ip_str, sizeof(ip_str));
-                    printf("%s\n", ip_str);
+
+                    if (verbose){
+                        printf("%s\n", ip_str);
+                    }
 
                     // Collect the translation
                     if (translation_list != NULL && translation_file != NULL){
@@ -660,20 +681,48 @@ int parse_dns_rrs(const char *section_name, const unsigned char *dns_payload, in
                 }
                 break;
             }
-            case 33: // SRV  TODO
-            case 35: // NAPTR
-            case 39: // DNAME
-            case 41: // OPT
-            case 43: // DS
-            case 46: // RRSIG
-            case 47: // NSEC
-            case 48: // DNSKEY
-            case 257: // CAA
-            case 252: // AXFR
-            break;
+            case 33: // SRV
+            {
+                if (rdlength < 6){
+                    fprintf(stderr, "Invalid SRV record length!\n");
+                    offset += rdlength;
+                    break;
+                }
+
+                int start = offset;
+
+                uint16_t priority = EXTRACT_16BITS(dns_payload, offset);
+                offset += 2; // Move the offset past the PRIORITY field
+                uint16_t weight = EXTRACT_16BITS(dns_payload, offset);
+                offset += 2; // Move the offset past the WEIGHT field
+                uint16_t port = EXTRACT_16BITS(dns_payload, offset);
+                offset += 2; // Move the offset past the PORT field
+
+                char target[MAX_DOMAIN_NAME_LEN];
+                int bytes_consumed = parse_domain_name(dns_payload, dns_payload_len, offset, target);
+                if (bytes_consumed < 0){
+                    fprintf(stderr, "Failed to parse SRV target!\n");
+                    return -1;
+                }
+
+                if (verbose){
+                    printf("%u %u %u %s\n", priority, weight, port, target);
+                }
+
+                // Collect the domain name
+                if (domain_list != NULL && domain_file != NULL){
+                    if (!(add_domain_name(domain_list, target))){
+                        fprintf(domain_file, "%s\n", target);
+                        fflush(domain_file);
+                    }
+                }
+
+                offset += rdlength;
+                break;
+            }            
             default:
                 fprintf(stderr, "Unsupported RR type: %u\n", rr_type);
-                offset += rdlength;
+                offset +=  rdlength;
                 break;
         }    
     }
