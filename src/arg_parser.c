@@ -92,6 +92,7 @@ ProgramArguments parse_arguments(int argc, char * argv[]){
         if (args.verbose){
             printf("Verbose option enabled\n");
         } 
+        printf("\n");
     }
     return args;
 }
