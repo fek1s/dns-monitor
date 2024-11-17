@@ -218,6 +218,7 @@ void proccees_dns_packet(const unsigned char *dns_payload, int dns_payload_len, 
         offset = parse_dns_rrs("Answer Section", dns_payload, dns_payload_len, offset, an_count, domain_list, translation_list, args->domains_file, args->translations_file);
         offset = parse_dns_rrs("Authority Section", dns_payload, dns_payload_len, offset, ns_count, domain_list, translation_list, args->domains_file, args->translations_file);
         offset = parse_dns_rrs("Additional Section", dns_payload, dns_payload_len, offset, ar_count, domain_list, translation_list, args->domains_file, args->translations_file);
+        printf("====================\n");
 
         return;
     }
@@ -374,7 +375,7 @@ int parse_dns_question(const unsigned char *dns_payload, int dns_payload_len, in
         }
     }
 
-    printf("\n");
+    //printf("\n");
     return offset;
 }
 
@@ -445,7 +446,7 @@ int parse_dns_rrs(const char *section_name, const unsigned char *dns_payload, in
 
     if (rr_count == 0) return offset;
 
-    printf("[%s]\n", section_name);
+    printf("\n[%s]\n", section_name);
 
     for (int i = 0; i < rr_count; i++)
     {
@@ -495,7 +496,6 @@ int parse_dns_rrs(const char *section_name, const unsigned char *dns_payload, in
                     printf("%s\n", ip_str);
 
                     // Collect the translation
-                    // TODO
                     if (translation_list != NULL && translation_file != NULL){
                         if (!(add_translation(translation_list, domain_name, ip_str))){
                             fprintf(translation_file, "%s %s\n", domain_name, ip_str);
@@ -512,17 +512,117 @@ int parse_dns_rrs(const char *section_name, const unsigned char *dns_payload, in
             break;
 
             case 2: // NS TODO
-            break;
+            {
+                offset += rdlength;
+                break;
+                
+            }
             case 5: // CNAME TODO
             break;
             case 6: // SOA TODO
-            break;
-            case 12: // PTR TODO
-            break;
-            case 15: // MX TODO
-            break;
+            {
+                char mname[MAX_DOMAIN_NAME_LEN];
+                int bytes_consumed = parse_domain_name(dns_payload, dns_payload_len, offset, mname);
+                if (bytes_consumed < 0){
+                    fprintf(stderr, "Failed to parse SOA MNAME!\n");
+                    return -1;
+                }
+                offset += bytes_consumed;
+
+                char rname[MAX_DOMAIN_NAME_LEN];
+                bytes_consumed = parse_domain_name(dns_payload, dns_payload_len, offset, rname);
+                if (bytes_consumed < 0){
+                    fprintf(stderr, "Failed to parse SOA RNAME!\n");
+                    return -1;
+                }
+                offset += bytes_consumed;
+
+                if (offset + 20 > dns_payload_len){
+                    fprintf(stderr, "Invalid SOA record length!\n");
+                    offset += rdlength;
+                    break;
+                }
+
+                uint32_t serial = EXTRACT_32BITS(dns_payload, offset);
+                offset += 4; // Move the offset past the SERIAL field
+                uint32_t refresh = EXTRACT_32BITS(dns_payload, offset);
+                offset += 4; // Move the offset past the REFRESH field
+                uint32_t retry = EXTRACT_32BITS(dns_payload, offset);
+                offset += 4; // Move the offset past the RETRY field
+                uint32_t expire = EXTRACT_32BITS(dns_payload, offset);
+                offset += 4; // Move the offset past the EXPIRE field
+                uint32_t minimum = EXTRACT_32BITS(dns_payload, offset);
+                offset += 4; // Move the offset past the MINIMUM field
+
+                printf("%s %s %u %u %u %u %u\n", mname, rname, serial, refresh, retry, expire, minimum);
+
+                // Collect the domain name
+                if (domain_list != NULL && domain_file != NULL){
+                    if (!(add_domain_name(domain_list, mname))){
+                        fprintf(domain_file, "%s\n", mname);
+                        fflush(domain_file);
+                    }
+                    if (!(add_domain_name(domain_list, rname))){
+                        fprintf(domain_file, "%s\n", rname);
+                        fflush(domain_file);
+                    }
+                }
+                break;
+            }
+
+            case 12: // PTR
+            {
+                char ptr_domain_name[MAX_DOMAIN_NAME_LEN];
+                int bytes_consumed = parse_domain_name(dns_payload, dns_payload_len, offset, ptr_domain_name);
+                if (bytes_consumed < 0){
+                    fprintf(stderr, "Failed to parse PTR domain name!\n");
+                    return -1;
+                }
+                printf("%s\n", ptr_domain_name);
+
+                // Collect the domain name
+                if (domain_list != NULL && domain_file != NULL){
+                    if (!(add_domain_name(domain_list, ptr_domain_name))){
+                        fprintf(domain_file, "%s\n", ptr_domain_name);
+                        fflush(domain_file);
+                    }
+                }
+
+                offset += bytes_consumed;
+                break;
+            }
+            case 15: // MX 
+            {
+                if (rdlength < 3){
+                    fprintf(stderr, "Invalid MX record length!\n");
+                    offset += rdlength;
+                    break;
+                }
+
+                uint16_t preference = EXTRACT_16BITS(dns_payload, offset);
+                offset += 2; // Move the offset past the PREFERENCE field
+
+                char mx_domain_name[MAX_DOMAIN_NAME_LEN];
+                int bytes_consumed = parse_domain_name(dns_payload, dns_payload_len, offset, mx_domain_name);
+                if (bytes_consumed < 0){
+                    fprintf(stderr, "Failed to parse MX domain name!\n");
+                    return -1;
+                }
+                printf("%u %s\n", preference, mx_domain_name);
+
+                // Collect the domain name
+                if (domain_list != NULL && domain_file != NULL){
+                    if (!(add_domain_name(domain_list, mx_domain_name))){
+                        fprintf(domain_file, "%s\n", mx_domain_name);
+                        fflush(domain_file);
+                    }
+                }
+
+                offset += bytes_consumed;
+                break;
+            }
             case 16: // TXT
-            case 28: // AAAA TODO
+            case 28: // AAAA
             {
                 if (rdlength == 16) {
                     char ip_str[INET6_ADDRSTRLEN];
@@ -530,7 +630,6 @@ int parse_dns_rrs(const char *section_name, const unsigned char *dns_payload, in
                     printf("%s\n", ip_str);
 
                     // Collect the translation
-                    // TODO
                     if (translation_list != NULL && translation_file != NULL){
                         if (!(add_translation(translation_list, domain_name, ip_str))){
                             fprintf(translation_file, "%s %s\n", domain_name, ip_str);
@@ -543,8 +642,8 @@ int parse_dns_rrs(const char *section_name, const unsigned char *dns_payload, in
                     fprintf(stderr, "Invalid AAAA record length!\n");
                     offset += rdlength;
                 }
+                break;
             }
-            break;
             case 33: // SRV  TODO
             case 35: // NAPTR
             case 39: // DNAME
@@ -562,6 +661,5 @@ int parse_dns_rrs(const char *section_name, const unsigned char *dns_payload, in
                 break;
         }    
     }
-    printf("\n");
     return offset;
 }
