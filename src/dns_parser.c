@@ -450,12 +450,13 @@ int parse_dns_rrs(const char *section_name, const unsigned char *dns_payload, in
 
         uint16_t rr_type = EXTRACT_16BITS(dns_payload, offset);
         offset += 2; // Move the offset past the TYPE field
+
         uint16_t rr_class = EXTRACT_16BITS(dns_payload, offset);
         offset += 2; // Move the offset past the CLASS field
-        
-        // TODO: Need to make extract 32 bits
+
         uint32_t ttl = EXTRACT_32BITS(dns_payload, offset);
         offset += 4; // Move the offset past the TTL field
+        
         uint16_t rdlength = EXTRACT_16BITS(dns_payload, offset);
         offset += 2; // Move the offset past the RDLENGTH field
 
@@ -645,14 +646,6 @@ int parse_dns_rrs(const char *section_name, const unsigned char *dns_payload, in
                     printf("%u %s\n", preference, mx_domain_name);
                 }
 
-                // Collect the domain name
-                // if (domain_list != NULL && domain_file != NULL){
-                //     if (!(add_domain_name(domain_list, mx_domain_name))){
-                //         fprintf(domain_file, "%s\n", mx_domain_name);
-                //         fflush(domain_file);
-                //     }
-                // }
-
                 offset += bytes_consumed;
                 break;
             }
@@ -688,8 +681,6 @@ int parse_dns_rrs(const char *section_name, const unsigned char *dns_payload, in
                     offset += rdlength;
                     break;
                 }
-
-                int start = offset;
 
                 uint16_t priority = EXTRACT_16BITS(dns_payload, offset);
                 offset += 2; // Move the offset past the PRIORITY field
