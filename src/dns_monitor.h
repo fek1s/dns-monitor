@@ -200,7 +200,7 @@ void proccees_dns_packet(const unsigned char *dns_payload, int dns_payload_len, 
  * @param ns_count Pointer to a variable where the Number of authority records field will be stored.
  * @param ar_count Pointer to a variable where the Number of additional records will be stored.
  */
-void parse_dns_header(const unsigned char *dns_payload, uint16_t *id, uint16_t *flags, uint16_t *qd_count, uint16_t *an_count, u_int16_t *ns_count, uint16_t *ar_count);
+int parse_dns_header(const unsigned char *dns_payload, uint16_t *id, uint16_t *flags, uint16_t *qd_count, uint16_t *an_count, uint16_t *ns_count, uint16_t *ar_count);
 
 
 /**
@@ -276,7 +276,6 @@ const char* dns_class_to_string(uint16_t qclass);
  * @return The offset after parsing the resource records.
  * 
  */
-
 int parse_dns_rrs(const char *section_name, const unsigned char *buffer, int buffer_len, int offset, uint16_t rr_count,
                   DomainList *domain_list, TranslationList *translation_list, FILE *domain_file, FILE *translation_file, int verbose);
 
