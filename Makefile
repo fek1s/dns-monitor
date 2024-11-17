@@ -1,5 +1,5 @@
 BIN=dns-monitor 
-CFLAGS= -std=gnu99 -Wall -Wextra -pedantic -g
+CFLAGS= -std=gnu99 -Wall -Werror -Wextra -pedantic -g
 LDFLAGS= -lpcap
 CC=gcc
 B=build
