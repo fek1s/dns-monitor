@@ -51,3 +51,4 @@ clean:
 	rm -rf $(B) $(BIN)
 	rm -f domain.txt
 	rm -f translation.txt
+	rm -f test
