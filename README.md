@@ -1,10 +1,9 @@
-# DNS Monitor
+# Projekt - DNS Monitor
 
 ## Autor
-
-- **Jméno:** Jakub Fukala
-- **Login:** xfukal01
-- **Datum vytvoření:** 26.10. 2024
+**Jméno:** Jakub Fukala
+**Login:** xfukal01
+**Datum vytvoření:** 26.10. 2024
 
 ## Popis programu
 
@@ -43,9 +42,6 @@ Pro Arch linux:
 ```bash
 sudo pacman -S cunit
 ```
-
-
-
 
 ## Příklad spuštění
 
