@@ -46,11 +46,6 @@ int get_link_header_len() {
 
 
 void packet_handler(unsigned char *user, const struct pcap_pkthdr *header, const unsigned char *packet){
-    if (stop_capture){
-        printf("Stopping packet capture\n");
-        pcap_breakloop(handle);
-        return;
-    }
 
     // Casts the user data to a ProgramArguments pointer.
     ProgramArguments *args = (ProgramArguments *)user;
@@ -149,16 +144,12 @@ void proccees_dns_packet(const unsigned char *dns_payload, int dns_payload_len, 
                         const char *dst_ip_str, uint16_t src_port, uint16_t dst_port, const ProgramArguments *args, 
                         DomainList *domain_list,TranslationList *translation_list ,const struct timeval ts){
 
-
-    if (dns_payload_len < MIN_DNS_HEADER_LEN)
-    {
-        fprintf(stderr, "DNS payload is too short for parsing!\n");
-        return;
-    }
-
     uint16_t id, flags, qd_count, an_count, ns_count, ar_count;
 
-    parse_dns_header(dns_payload, &id, &flags, &qd_count, &an_count, &ns_count, &ar_count);
+    if (parse_dns_header(dns_payload, dns_payload_len ,&id, &flags, &qd_count, &an_count, &ns_count, &ar_count) < 0){
+        fprintf(stderr, "Failed to parse DNS header!\n");
+        return;
+    }
 
 
     // Get the timestamp
@@ -211,7 +202,7 @@ void proccees_dns_packet(const unsigned char *dns_payload, int dns_payload_len, 
     return;
 }
 
-int parse_dns_header(const unsigned char *dns_payload, uint16_t *id, uint16_t *flags, uint16_t *qd_count,
+int parse_dns_header(const unsigned char *dns_payload, int dns_payload_len ,uint16_t *id, uint16_t *flags, uint16_t *qd_count,
                         uint16_t *an_count, uint16_t *ns_count, uint16_t *ar_count){
     if (!dns_payload)
     {   
@@ -219,7 +210,12 @@ int parse_dns_header(const unsigned char *dns_payload, uint16_t *id, uint16_t *f
         return -1;
     }
 
-    
+    if (dns_payload_len < MIN_DNS_HEADER_LEN){
+        fprintf(stderr, "Invalid DNS payload length!\n");
+        return -1;
+    }
+
+
     *id = EXTRACT_16BITS(dns_payload, DNS_ID_OFFSET);
     *flags = EXTRACT_16BITS(dns_payload, DNS_FLAGS_OFFSET);
     *qd_count = EXTRACT_16BITS(dns_payload, DNS_QDCOUNT_OFFSET);
@@ -628,7 +624,8 @@ int parse_dns_rrs(const char *section_name, const unsigned char *dns_payload, in
                 break;
             }
             case 15: // MX 
-            {
+            {   
+                // Make sure there is enough space for the PREFERENCE field
                 if (rdlength < 3){
                     fprintf(stderr, "Invalid MX record length!\n");
                     offset += rdlength;

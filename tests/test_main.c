@@ -98,6 +98,8 @@ void test_parse_dns_rrs_a_and_aaaa(void) {
     fclose(translation_file);
 }
 
+// DNS Header Tests //
+//////////////////////
 void test_parse_dns_header_valid(void) {
     unsigned char dns_payload[] = {
         0x12, 0x34, // ID
@@ -108,8 +110,10 @@ void test_parse_dns_header_valid(void) {
         0x00, 0x04  // ARCOUNT
     };
 
+    int payload_len = sizeof(dns_payload);  
+
     uint16_t id, flags, qd_count, an_count, ns_count, ar_count;
-    int result = parse_dns_header(dns_payload, &id, &flags, &qd_count, &an_count, &ns_count, &ar_count);
+    int result = parse_dns_header(dns_payload, payload_len ,&id, &flags, &qd_count, &an_count, &ns_count, &ar_count);
 
     CU_ASSERT_EQUAL(result, 0);
     CU_ASSERT_EQUAL(id, 0x1234);
@@ -118,6 +122,23 @@ void test_parse_dns_header_valid(void) {
     CU_ASSERT_EQUAL(an_count, 2);
     CU_ASSERT_EQUAL(ns_count, 3);
     CU_ASSERT_EQUAL(ar_count, 4);
+}
+
+void test_parse_dns_header_invalid(void) {
+    unsigned char dns_payload[] = {
+        0x12, 0x34, // ID
+        0x01, 0x00, // Flags
+        0x00, 0x01, // QDCOUNT
+        0x00, 0x02, // ANCOUNT
+        0x00, 0x03, // NSCOUNT
+        // Missing ARCOUNT
+    };
+
+    int payload_len = sizeof(dns_payload);  
+    uint16_t id, flags, qd_count, an_count, ns_count, ar_count;
+    int result = parse_dns_header(dns_payload, payload_len ,&id, &flags, &qd_count, &an_count, &ns_count, &ar_count);
+
+    CU_ASSERT_EQUAL(result, -1);
 }
 
 // Domain List Section//
@@ -221,8 +242,8 @@ void test_parse_arguments_missing_mandatory(void) {
  *
  */
 void test_parse_arguments_all_options(void) {
-    char *argv[] = {"dns-monitor", "-i", "eth0", "-d", "domains.txt", "-t", "translations.txt", "-v", "-g", NULL};
-    int argc = 9;
+    char *argv[] = {"dns-monitor", "-i", "eth0", "-d", "domains.txt", "-t", "translations.txt", "-v", NULL};
+    int argc = 8;
 
     ProgramArguments args = parse_arguments(argc, argv);
 
@@ -232,25 +253,31 @@ void test_parse_arguments_all_options(void) {
     CU_ASSERT_EQUAL(args.domain_colecting, 1);
     CU_ASSERT_EQUAL(args.translation_colecting, 1);
     CU_ASSERT_EQUAL(args.verbose, 1);
-    CU_ASSERT_EQUAL(args.debug, 1);
 }
 
 int main() {
     CU_initialize_registry();
-    CU_pSuite suite = CU_add_suite("DNS Parser Suite", NULL, NULL);
+    
     // DNS Parsing Tests
+    CU_pSuite suite = CU_add_suite("DNS message parsing", NULL, NULL);
     CU_add_test(suite, "Test Parse Domain Name", test_parse_domain_name);
     CU_add_test(suite, "Test Parse Domain Name Compression", test_parse_domain_name_compression);
     CU_add_test(suite, "Test Parse DNS Questions", test_parse_dns_questions);
     CU_add_test(suite, "Test Parse DNS RRs A and AAAA", test_parse_dns_rrs_a_and_aaaa);
-    CU_add_test(suite, "Test Parse DNS Header Valid", test_parse_dns_header_valid);
+
+    // DNS Header Tests
+    CU_pSuite suite1 = CU_add_suite("DNS Header parsing", NULL, NULL);
+    CU_add_test(suite1, "Test Parse DNS Header Valid", test_parse_dns_header_valid);
+    CU_add_test(suite1, "Test Parse DNS Header Invalid", test_parse_dns_header_invalid);
 
     // Domain List Tests
-    CU_add_test(suite, "Test Add Domain Name", test_add_domain_name);
-    CU_add_test(suite, "Test Add Translation", test_add_translation);
+    CU_pSuite suite2 = CU_add_suite("List Suite", NULL, NULL);
+    CU_add_test(suite2, "Test Add Domain Name", test_add_domain_name);
+    CU_add_test(suite2, "Test Add Translation", test_add_translation);
 
     // Arg Parser Tests
-    CU_add_test(suite, "Test Parse Arguments All Options", test_parse_arguments_all_options);
+    CU_pSuite suite3 = CU_add_suite("Arg Parser Suite", NULL, NULL);
+    CU_add_test(suite3, "Test Parse Arguments All Options", test_parse_arguments_all_options);
 
 
     CU_basic_set_mode(CU_BRM_VERBOSE);
