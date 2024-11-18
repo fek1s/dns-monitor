@@ -5,7 +5,7 @@ dns-monitor
 test
 
 *.pcapng
-*.pcap
+
 
 # Folders
 .vscode/
