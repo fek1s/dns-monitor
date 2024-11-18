@@ -1,4 +1,3 @@
-#include <stdio.h>
 #include "dns_monitor.h"
 #include <getopt.h>
 

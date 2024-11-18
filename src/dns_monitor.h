@@ -18,8 +18,6 @@
 #include <stdio.h>
 #include <signal.h>
 #include <pcap/pcap.h>
-#include <netinet/in.h>       // Include this for IP address structures
-#include <netinet/if_ether.h>  // For struct ether_header
 #include <netinet/ip6.h>       // For struct ip6_hdr (IPv6 header)
 #include <arpa/inet.h>         // For inet_ntop to convert IP addresses to strings
 #include <string.h>            // For memset, memcpy
@@ -193,6 +191,7 @@ void proccees_dns_packet(const unsigned char *dns_payload, int dns_payload_len, 
  * question count, answer count, authority record count, and additional record count.
  *
  * @param dns_payload Pointer to the DNS payload from which the header will be parsed.
+ * @param dns_payload_len Length of the DNS payload.
  * @param id Pointer to a variable where the Transaction ID will be stored.
  * @param flags Pointer to a variable where the Flags will be stored.
  * @param qd_count Pointer to a variable where the Number of questions will be stored.
@@ -200,7 +199,7 @@ void proccees_dns_packet(const unsigned char *dns_payload, int dns_payload_len, 
  * @param ns_count Pointer to a variable where the Number of authority records field will be stored.
  * @param ar_count Pointer to a variable where the Number of additional records will be stored.
  */
-int parse_dns_header(const unsigned char *dns_payload, uint16_t *id, uint16_t *flags, uint16_t *qd_count, uint16_t *an_count, uint16_t *ns_count, uint16_t *ar_count);
+int parse_dns_header(const unsigned char *dns_payload, int dns_payload_len, uint16_t *id, uint16_t *flags, uint16_t *qd_count, uint16_t *an_count, uint16_t *ns_count, uint16_t *ar_count);
 
 
 /**

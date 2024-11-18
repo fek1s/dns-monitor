@@ -16,8 +16,9 @@ volatile sig_atomic_t stop_capture = 0;
 pcap_t *handle;
 
 void handle_signal() {
-    printf("\nReceived Ctrl+C, exiting...\n");
     stop_capture = 1;
+    pcap_breakloop(handle);
+
 }
 
 int main(int argc, char * argv[]) {

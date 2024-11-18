@@ -68,16 +68,19 @@ dns-monitor -p file.pcap -d domains.txt -t translations.txt
 
 ### Struktura repozitáře
 ```.
-├── src
+├── src/
 │   ├── dns_monitor.c   # Obsahuje hlavní vstup programu
 │   ├── dns_monitor.h   # Hlavičkový soubor určen pro sdílení funkcí mezi soubory
 │   ├── dns_parser.c    # Obsahuje implementaci funkcí pro zpracování zpráv DNS
 │   ├── arg_parser.c    # Obsahuje implementaci pro zpracovaní argumentů příkazové řádky
 │   ├── linked_list.c   # Obsahuje implementaci jednosměrně vázaných seznamů
 │   ├── linked_list.h   # Hlavičkový soubor určen pro sdílení funkcí pro prací se seznamy
-├── tests
+├── tests/
 │   ├── test_main.c     # Soubor obsahujíci základní testy programu 
+├── pcapfiles/
+│   
 ├── Makefile
+├── LICENSE
 ├── README.md
 ```
 
