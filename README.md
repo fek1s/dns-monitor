@@ -77,8 +77,7 @@ dns-monitor -p file.pcap -d domains.txt -t translations.txt
 │   ├── linked_list.h   # Hlavičkový soubor určen pro sdílení funkcí pro prací se seznamy
 ├── tests/
 │   ├── test_main.c     # Soubor obsahujíci základní testy programu 
-├── pcapfiles/
-│   
+│   ├──pcapfiles/
 ├── Makefile
 ├── LICENSE
 ├── README.md

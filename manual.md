@@ -62,10 +62,9 @@ Hlavní cíle programu dns-monitor jsou:
 │   ├── arg_parser.c   
 │   ├── linked_list.c  
 │   ├── linked_list.h  
-├── test/
-│   ├── test_main.c
-├── pcapfiles/
-│       
+├── tests/
+│   ├── test_main.c     # Soubor obsahujíci základní testy programu 
+│   ├──pcapfiles/
 ├── Makefile
 ├── LICENSE
 ├── README.md
